@@ -206,6 +206,12 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
   white-space: pre-wrap;
   word-break: normal;
 }
+.CodeMirror-rtl pre {
+  direction: rtl;
+}
+.CodeMirror-ltr pre {
+  direction: ltr;
+}
 
 .CodeMirror-linebackground {
   position: absolute;
