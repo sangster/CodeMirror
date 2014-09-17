@@ -2,9 +2,9 @@
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
 (function() {
-  var mode = CodeMirror.getMode({tabSize: 4}, "textile");
+  var mode = CodeMirror.getMode({tabSize: 4}, 'textile');
   function MT(name) { test.mode(name, mode, Array.prototype.slice.call(arguments, 1)); }
-  var modeHighlightFormatting = CodeMirror.getMode({tabSize: 4}, {name: "textile", highlightFormatting: true});
+  var modeHighlightFormatting = CodeMirror.getMode({tabSize: 4}, {name: 'textile', highlightFormatting: true});
   function FT(name) { test.mode(name, modeHighlightFormatting, Array.prototype.slice.call(arguments, 1)); }
 
 
@@ -48,67 +48,79 @@
   MT('bold',
       'foo [strong **bar**]');
 
-  MT("ul",
-      "foo",
-      "bar",
-      "",
-      "[variable-2 * foo]",
-      "[variable-2 * bar]");
+  MT('ul',
+      'foo',
+      'bar',
+      '',
+      '[variable-2 * foo]',
+      '[variable-2 * bar]');
 
-  MT("ulNoBlank",
-      "foo",
-      "bar",
-      "[variable-2 * foo]",
-      "[variable-2 * bar]");
+  MT('ulNoBlank',
+      'foo',
+      'bar',
+      '[variable-2 * foo]',
+      '[variable-2 * bar]');
 
-  MT("ol",
-      "foo",
-      "bar",
-      "",
-      "[variable-2 # foo]",
-      "[variable-2 # bar]");
+  MT('ol',
+      'foo',
+      'bar',
+      '',
+      '[variable-2 # foo]',
+      '[variable-2 # bar]');
 
-  MT("olNoBlank",
-      "foo",
-      "bar",
-      "[variable-2 # foo]",
-      "[variable-2 # bar]");
+  MT('olNoBlank',
+      'foo',
+      'bar',
+      '[variable-2 # foo]',
+      '[variable-2 # bar]');
 
-  MT("ulFormatting",
-      "[variable-2 * ][variable-2&em _foo_][variable-2 bar]",
-      "[variable-2 * ][variable-2&strong *][variable-2&em&strong _foo_][variable-2&strong *][variable-2  bar]",
-      "[variable-2 * ][variable-2&strong *foo*][variable-2 bar]");
+  MT('ulFormatting',
+      '[variable-2 * ][variable-2&em _foo_][variable-2 bar]',
+      '[variable-2 * ][variable-2&strong *][variable-2&em&strong _foo_][variable-2&strong *][variable-2  bar]',
+      '[variable-2 * ][variable-2&strong *foo*][variable-2 bar]');
 
-  MT("olFormatting",
-      "[variable-2 # ][variable-2&em _foo_][variable-2 bar]",
-      "[variable-2 # ][variable-2&strong *][variable-2&em&strong _foo_][variable-2&strong *][variable-2  bar]",
-      "[variable-2 # ][variable-2&strong *foo*][variable-2 bar]");
+  MT('olFormatting',
+      '[variable-2 # ][variable-2&em _foo_][variable-2 bar]',
+      '[variable-2 # ][variable-2&strong *][variable-2&em&strong _foo_][variable-2&strong *][variable-2  bar]',
+      '[variable-2 # ][variable-2&strong *foo*][variable-2 bar]');
 
-  MT("ulNested",
-      "[variable-2 * foo]",
-      "[variable-3 ** bar]",
-      "[keyword *** bar]",
-      "[variable-2 **** bar]",
-      "[variable-3 ** bar]");
+  MT('ulNested',
+      '[variable-2 * foo]',
+      '[variable-3 ** bar]',
+      '[keyword *** bar]',
+      '[variable-2 **** bar]',
+      '[variable-3 ** bar]');
 
-  MT("olNested",
-      "[variable-2 # foo]",
-      "[variable-3 ## bar]",
-      "[keyword ### bar]",
-      "[variable-2 #### bar]",
-      "[variable-3 ## bar]");
+  MT('olNested',
+      '[variable-2 # foo]',
+      '[variable-3 ## bar]',
+      '[keyword ### bar]',
+      '[variable-2 #### bar]',
+      '[variable-3 ## bar]');
 
-  MT("ulNestedWithOl",
-      "[variable-2 * foo]",
-      "[variable-3 ## bar]",
-      "[keyword *** bar]",
-      "[variable-2 #### bar]",
-      "[variable-3 ** bar]");
+  MT('ulNestedWithOl',
+      '[variable-2 * foo]',
+      '[variable-3 ## bar]',
+      '[keyword *** bar]',
+      '[variable-2 #### bar]',
+      '[variable-3 ** bar]');
 
-  MT("olNestedWithUl",
-      "[variable-2 # foo]",
-      "[variable-3 ** bar]",
-      "[keyword ### bar]",
-      "[variable-2 **** bar]",
-      "[variable-3 ## bar]");
+  MT('olNestedWithUl',
+      '[variable-2 # foo]',
+      '[variable-3 ** bar]',
+      '[keyword ### bar]',
+      '[variable-2 **** bar]',
+      '[variable-3 ## bar]');
+
+  MT('paragraph',
+      'p. foo bar');
+
+  MT('div',
+      'div. foo bar');
+
+  MT('paragraphFormatting',
+      'p. [strong *foo ][strong&em _bar_][strong *]');
+
+  MT('divFormatting',
+      'div. [strong *foo ][strong&em _bar_][strong *]');
 })();

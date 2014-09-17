@@ -23,7 +23,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   ,   list3      = 'keyword'
   ;
   var headerRE    = /^h([1-6])\.\s+/
-  ,   paragraphRE = /^p\.\s+/
+  ,   paragraphRE = /^(?:p|div)\.\s+/
   ,   textRE      = /^[^_*]+/
   ,   ulRE        = /^(\*+)\s+/
   ,   olRE        = /^(#+)\s+/
