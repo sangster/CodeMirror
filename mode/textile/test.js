@@ -9,11 +9,11 @@
 
 
   FT('simple_header',
-     '[formatting&formatting-header&formatting-header-1&header&header-1 h1.]' +
-     '[header&header-1  Give RedCloth a try!]');
+      '[formatting&formatting-header&formatting-header-1&header&header-1 h1. ]' +
+      '[header&header-1 Give RedCloth a try!]');
 
   MT('plainText',
-     'This is some text.');
+      'This is some text.');
 
   MT('h1',
       '[header&header-1 h1. foo]');
@@ -41,4 +41,60 @@
 
   MT('strong',
       'foo [strong *bar*]');
+
+  MT('italics',
+      'foo [em __bar__]');
+
+  MT('bold',
+      'foo [strong **bar**]');
+
+  MT("ul",
+      "foo",
+      "bar",
+      "",
+      "[variable-2 * foo]",
+      "[variable-2 * bar]");
+
+  MT("ulNoBlank",
+      "foo",
+      "bar",
+      "[variable-2 * foo]",
+      "[variable-2 * bar]");
+
+  MT("ol",
+      "foo",
+      "bar",
+      "",
+      "[variable-2 # foo]",
+      "[variable-2 # bar]");
+
+  MT("olNoBlank",
+      "foo",
+      "bar",
+      "[variable-2 # foo]",
+      "[variable-2 # bar]");
+
+  MT("ulFormatting",
+      "[variable-2 * ][variable-2&em _foo_][variable-2 bar]",
+      "[variable-2 * ][variable-2&strong *][variable-2&em&strong _foo_][variable-2&strong *][variable-2  bar]",
+      "[variable-2 * ][variable-2&strong *foo*][variable-2 bar]");
+
+  MT("olFormatting",
+      "[variable-2 # ][variable-2&em _foo_][variable-2 bar]",
+      "[variable-2 # ][variable-2&strong *][variable-2&em&strong _foo_][variable-2&strong *][variable-2  bar]",
+      "[variable-2 # ][variable-2&strong *foo*][variable-2 bar]");
+
+  MT("ulNested",
+      "[variable-2 # foo]",
+      "[variable-3 ## bar]",
+      "[keyword ### bar]",
+      "[variable-2 #### bar]",
+      "[variable-3 ## bar]");
+
+  MT("olNested",
+      "[variable-2 * foo]",
+      "[variable-3 ** bar]",
+      "[keyword *** bar]",
+      "[variable-2 **** bar]",
+      "[variable-3 ** bar]");
 })();
