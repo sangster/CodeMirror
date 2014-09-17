@@ -12,21 +12,24 @@
 "use strict";
 
 CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
-  var header     = 'header'
-  ,   formatting = 'formatting'
+  var formatting = 'formatting'
+  ,   header     = 'header'
   ,   em         = 'em'
-  ,   italics    = 'em'
+  ,   italic     = 'italic'
   ,   strong     = 'strong'
-  ,   bold       = 'strong'
+  ,   bold       = 'bold'
   ,   list1      = 'variable-2'
   ,   list2      = 'variable-3'
   ,   list3      = 'keyword'
+  ,   quote      = 'quote'
   ;
   var headerRE    = /^h([1-6])\.\s+/
   ,   paragraphRE = /^(?:p|div)\.\s+/
   ,   textRE      = /^[^_*]+/
   ,   ulRE        = /^(\*+)\s+/
   ,   olRE        = /^(#+)\s+/
+  ,   quoteRE     = /^bq(\.\.?)\s+/
+  ,   blockRE     = /^(?:h[1-6]|p|div|bq\.?)\.\s+/
   ;
 
   if (modeCfg.highlightFormatting === undefined) {
@@ -64,12 +67,13 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
     if (state.header) { styles.push(header); styles.push(header + "-" + state.header); }
     if (state.em) { styles.push(em); }
-    if (state.italics) { styles.push(italics); }
+    if (state.italic) { styles.push(italic); }
     if (state.strong) { styles.push(strong); }
     if (state.bold) { styles.push(bold); }
+    if (state.quote) { styles.push(quote); }
 
     if (state.list !== false) {
-      var listMod = (state.listDepth - 1) % 3;
+      listMod = (state.listDepth - 1) % 3;
       if (!listMod) {
         styles.push(list1);
       } else if (listMod === 1) {
@@ -83,8 +87,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function blockNormal(stream, state) {
-    var ch
-    ,   match
+    var match
     ,   listType
     ;
     if (stream.eatSpace()) {
@@ -106,6 +109,11 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       state.f = state.inline;
       if (modeCfg.highlightFormatting) state.formatting = ["list", "list-" + listType];
       return getType(state);
+    } else if (match = stream.match(quoteRE)) {
+      state.quote = true;
+      if (match[1].length === 2) { state.multilineFormat = quote; }
+      if (modeCfg.highlightFormatting) state.formatting = 'quote';
+      return getType(state);
     } else if (stream.match(paragraphRE)) {
       return getType(state);
     }
@@ -126,14 +134,14 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
     if (ch === '_') {
       if (stream.eat('_')) {
-        if(state.italics) { // Remove ITALICS
-          if (modeCfg.highlightFormatting) state.formatting = 'italics';
+        if(state.italic) { // Remove ITALIC
+          if (modeCfg.highlightFormatting) state.formatting = 'italic';
           t = getType(state);
-          state.italics = false;
+          state.italic = false;
           return t;
-        } else { // Add ITALICS
-          state.italics = true;
-          if (modeCfg.highlightFormatting) state.formatting = 'italics';
+        } else { // Add ITALIC
+          state.italic = true;
+          if (modeCfg.highlightFormatting) state.formatting = 'italic';
           return getType(state);
         }
       } else {
@@ -189,13 +197,18 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
     if (stream.sol()) {
       state.f = state.block;
+
+      if (state.multilineFormat) {
+        if (stream.match(blockRE, false)) {
+          state[state.multilineFormat] = false;
+          state.multilineFormat = null;
+        } else {
+          state[state.multilineFormat] = true;
+        }
+      }
     }
 
-    var result = state.f(stream, state);
-    if (stream.start == stream.pos) {
-//      return this.token(stream, state);
-    }
-    return result;
+    return state.f(stream, state);
   }
 
   return {
@@ -207,11 +220,13 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
         text: handleText,
 
         em: false,
-        italics: false,
+        italic: false,
         strong: false,
         bold: false,
         header: false,
         list: false,
+        quote: false,
+        multilineFormat: null,
 
         formatting: false
       };
@@ -221,11 +236,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
     blankLine: function(state) {
       state.em = false;
-      state.italics = false;
+      state.italic = false;
       state.strong = false;
       state.bold = false;
       state.header = false;
       state.list = false;
+      state.quote = false;
     }
   };
 });

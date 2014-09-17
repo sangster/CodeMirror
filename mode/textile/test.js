@@ -42,11 +42,11 @@
   MT('strong',
       'foo [strong *bar*]');
 
-  MT('italics',
-      'foo [em __bar__]');
+  MT('italic',
+      'foo [italic __bar__]');
 
   MT('bold',
-      'foo [strong **bar**]');
+      'foo [bold **bar**]');
 
   MT('ul',
       'foo',
@@ -123,4 +123,21 @@
 
   MT('divFormatting',
       'div. [strong *foo ][strong&em _bar_][strong *]');
+
+  MT('bq.',
+      '[quote bq. foo bar]',
+      '',
+      'Normal text.');
+
+  MT('bq..ThenParagraph',
+      '[quote bq.. foo bar]',
+      '',
+      '[quote More quote.]',
+      'p. Normal Text');
+
+  MT('bq..ThenH1',
+      '[quote bq.. foo bar]',
+      '',
+      '[quote More quote.]',
+      '[header&header-1 h1. Header Text]');
 })();

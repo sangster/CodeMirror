@@ -5,6 +5,7 @@
 <link rel=stylesheet href="../../doc/docs.css">
 
 <link rel="stylesheet" href="../../lib/codemirror.css">
+<link rel="stylesheet" href="textile.css">
 <script src="../../lib/codemirror.js"></script>
 <script src="textile.js"></script>
 <style>.CodeMirror {background: #f8f8f8;}</style>
@@ -35,6 +36,13 @@ a line break, some _emphasis_ and a "link":http://redcloth.org
 
 # one
 # two
+
+bq.. This is one paragraph.
+
+Another paragraph, also part of the quote.
+
+p. A normal paragraph ends the quote.
+
 </textarea></form>
     <script>
         var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
