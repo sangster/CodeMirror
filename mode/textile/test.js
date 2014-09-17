@@ -148,10 +148,10 @@
       '42.7% of all statistics are made up on the spot.[footnote-citation [[1]]]');
 
   MT('footCiteBogus',
-      '42.7% of all statistics are made up on the spot.[1a2]');
+      '42.7% of all statistics are made up on the spot.[[1a2]]');
 
   MT('footnote',
-      '[footnote fn123.] foo [strong *bar*]');
+      '[footnote fn123. foo ][footnote&strong *bar*]');
 
   MT('table',
       '[table |_. name |_. age|]',
@@ -160,6 +160,12 @@
 
   MT('special-characters',
       'RegisteredTrademark[special-char&special-char-r (r)], ' +
-      'Trademark[special-char&special-char-tms (tm)], and ' +
+      'Trademark[special-char&special-char-tm (tm)], and ' +
       'Copyright [special-char&special-char-c (c)] 2008');
+
+  MT('cite',
+      "My wife's favorite book is [cite ??The Count of Monte Cristo??] by Dumas.");
+
+  MT('additionAndDeletion',
+      'The news networks declared [deletion -Al Gore-] [addition +George W. Bush+] the winner in Florida.');
 })();

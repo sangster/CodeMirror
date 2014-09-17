@@ -26,10 +26,13 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   ,   footCite    = 'footnote-citation'
   ,   table       = 'table'
   ,   specialChar = 'special-char'
+  ,   cite        = 'cite'
+  ,   addition    = 'addition'
+  ,   deletion    = 'deletion'
   ;
   var headerRE    = /^h([1-6])\.\s+/
   ,   paragraphRE = /^(?:p|div)\.\s+/
-  ,   textRE      = /^[^_*\[\(]+/
+  ,   textRE      = /^[^_*\[\(\?\+-]+/
   ,   ulRE        = /^(\*+)\s+/
   ,   olRE        = /^(#+)\s+/
   ,   quoteRE     = /^bq(\.\.?)\s+/
@@ -81,6 +84,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     if (state.footCite) { styles.push(footCite); }
     if (state.table) { styles.push(table); }
     if (state.specialChar) { styles.push(specialChar); styles.push(specialChar + "-" + state.specialChar); }
+    if (state.cite) { styles.push(cite); }
+    if (state.addition) { styles.push(addition); }
+    if (state.deletion) { styles.push(deletion); }
 
     if (state.list !== false) {
       listMod = (state.listDepth - 1) % 3;
@@ -207,6 +213,36 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       } else if (stream.match('c)')) {
         state.specialChar = 'c';
       }
+    } else if (ch === '?' && stream.eat('?')) {
+      if(state.cite) { // Remove CITE
+        if (modeCfg.highlightFormatting) state.formatting = 'cite';
+        type = getType(state);
+        state.cite = false;
+        return type;
+      } else { // Add CITE
+        state.cite = true;
+        if (modeCfg.highlightFormatting) state.formatting = 'cite';
+      }
+    } else if (ch === '-') {
+      if (state.deletion) { // Remove DELETION
+        if (modeCfg.highlightFormatting) state.formatting = 'deletion';
+        type = getType(state);
+        state.deletion = false;
+        return type;
+      } else { // Add deletion
+        state.deletion = true;
+        if (modeCfg.highlightFormatting) state.formatting = 'deletion';
+      }
+    } else if (ch === '+') {
+      if (state.addition) { // Remove ADDITION
+        if (modeCfg.highlightFormatting) state.formatting = 'addition';
+        type = getType(state);
+        state.addition = false;
+        return type;
+      } else { // Add ADDITION
+        state.addition = true;
+        if (modeCfg.highlightFormatting) state.formatting = 'addition';
+      }
     }
 
     return getType(state);
@@ -259,6 +295,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
         footCite: false,
         table: false,
         specialChar: null,
+        cite: false,
+        addition: false,
+        deletion: false,
 
         formatting: false
       };
@@ -278,6 +317,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       state.footCite = false;
       state.table = false;
       state.specialChar = null;
+      state.cite = false;
+      state.addition = false;
+      state.deletion = false;
     }
   };
 });

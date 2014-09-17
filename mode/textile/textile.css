@@ -17,3 +17,15 @@ span.cm-table {
     font-family: monospace;
     color: #660;
 }
+
+span.cm-cite {
+    font-style: italic;
+}
+
+span.cm-addition {
+    text-decoration: underline;
+}
+
+span.cm-deletion {
+    text-decoration: line-through;
+}
