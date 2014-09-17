@@ -18,10 +18,21 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   ,   em         = 'em'
   ,   strong     = 'strong';
 
-  var headerRE = /^h([1-6])\./;
+  var headerRE = /^h([1-6])\./
+  ,   textRE   = /^[^_]+/;
 
   if (modeCfg.highlightFormatting === undefined) {
     modeCfg.highlightFormatting = false;
+  }
+
+  function switchInline(stream, state, f) {
+    state.f = state.inline = f;
+    return f(stream, state);
+  }
+
+  function switchBlock(stream, state, f) {
+    state.f = state.block = f;
+    return f(stream, state);
   }
 
   function getType(state) {
@@ -41,31 +52,82 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       }
     }
 
-    if (state.header) { styles.push(header); }
+    if (state.header) { styles.push(header); styles.push(header + "-" + state.header); }
+    if (state.em) { styles.push(em); }
 
     return styles.length ? styles.join(' ') : null;
   }
 
-  function token(stream, state) {
+  function blockNormal(stream, state) {
     var ch
     ,   match;
 
-    state.formatting = false;
-
-    if(match = stream.match(headerRE)) {
-      state.header = parseInt(match[1]);
-      if (modeCfg.highlightFormatting) state.formatting = "header";
+    if (stream.eatSpace()) {
       return getType(state);
+    } else if(match = stream.match(headerRE)) {
+      state.header = parseInt(match[1]);
+      if (modeCfg.highlightFormatting) state.formatting = 'header';
+      return getType(state);
+    }
+
+    return switchInline(stream, state, state.inline);
+  }
+
+  function inlineNormal(stream, state) {
+    var style = state.text(stream, state)
+    ,   ch;
+
+    if (typeof style !== 'undefined') {
+      return style;
     }
 
     ch = stream.next();
 
+    if (ch === '_') {
+      if(state.em) { // Remove EM
+        if (modeCfg.highlightFormatting) state.formatting = "em";
+        var t = getType(state);
+        state.em = false;
+        return t;
+      } else { // Add EM
+        state.em = ch;
+        if (modeCfg.highlightFormatting) state.formatting = "em";
+        return getType(state);
+      }
+    }
+
     return getType(state);
+  }
+
+  function handleText(stream, state) {
+    if (stream.match(textRE, true)) {
+      return getType(state);
+    }
+    return undefined;
+  }
+
+  function token(stream, state) {
+    state.formatting = false;
+
+    if (stream.sol()) {
+      state.f = state.block;
+    }
+
+    var result = state.f(stream, state);
+    if (stream.start == stream.pos) {
+//      return this.token(stream, state);
+    }
+    return result;
   }
 
   return {
     startState: function() {
       return {
+        f: blockNormal,
+        inline: inlineNormal,
+        block: blockNormal,
+        text: handleText,
+
         em: false,
         strong: false,
         header: false,
