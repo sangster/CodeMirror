@@ -85,16 +85,30 @@
       "[variable-2 # ][variable-2&strong *foo*][variable-2 bar]");
 
   MT("ulNested",
+      "[variable-2 * foo]",
+      "[variable-3 ** bar]",
+      "[keyword *** bar]",
+      "[variable-2 **** bar]",
+      "[variable-3 ** bar]");
+
+  MT("olNested",
       "[variable-2 # foo]",
       "[variable-3 ## bar]",
       "[keyword ### bar]",
       "[variable-2 #### bar]",
       "[variable-3 ## bar]");
 
-  MT("olNested",
+  MT("ulNestedWithOl",
       "[variable-2 * foo]",
-      "[variable-3 ** bar]",
+      "[variable-3 ## bar]",
       "[keyword *** bar]",
-      "[variable-2 **** bar]",
+      "[variable-2 #### bar]",
       "[variable-3 ** bar]");
+
+  MT("olNestedWithUl",
+      "[variable-2 # foo]",
+      "[variable-3 ** bar]",
+      "[keyword ### bar]",
+      "[variable-2 **** bar]",
+      "[variable-3 ## bar]");
 })();
