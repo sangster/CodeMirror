@@ -38,4 +38,7 @@
 
   MT('h1inline',
       '[header&header-1 h1. foo ][header&header-1&em _bar_][header&header-1 baz]');
+
+  MT('strong',
+      'foo [strong *bar*]');
 })();

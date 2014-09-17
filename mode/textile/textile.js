@@ -19,7 +19,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   ,   strong     = 'strong';
 
   var headerRE = /^h([1-6])\./
-  ,   textRE   = /^[^_]+/;
+  ,   textRE   = /^[^_*]+/;
 
   if (modeCfg.highlightFormatting === undefined) {
     modeCfg.highlightFormatting = false;
@@ -54,6 +54,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
     if (state.header) { styles.push(header); styles.push(header + "-" + state.header); }
     if (state.em) { styles.push(em); }
+    if (state.strong) { styles.push(strong); }
 
     return styles.length ? styles.join(' ') : null;
   }
@@ -75,7 +76,8 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
   function inlineNormal(stream, state) {
     var style = state.text(stream, state)
-    ,   ch;
+    ,   ch
+    ,   t;
 
     if (typeof style !== 'undefined') {
       return style;
@@ -85,13 +87,24 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
     if (ch === '_') {
       if(state.em) { // Remove EM
-        if (modeCfg.highlightFormatting) state.formatting = "em";
-        var t = getType(state);
+        if (modeCfg.highlightFormatting) state.formatting = 'em';
+        t = getType(state);
         state.em = false;
         return t;
       } else { // Add EM
-        state.em = ch;
-        if (modeCfg.highlightFormatting) state.formatting = "em";
+        state.em = true;
+        if (modeCfg.highlightFormatting) state.formatting = 'em';
+        return getType(state);
+      }
+    } else if (ch === '*') {
+      if(state.strong) { // Remove STRONG
+        if (modeCfg.highlightFormatting) state.formatting = 'strong';
+        t = getType(state);
+        state.strong = false;
+        return t;
+      } else { // Add STRONG
+        state.strong = true;
+        if (modeCfg.highlightFormatting) state.formatting = 'strong';
         return getType(state);
       }
     }
