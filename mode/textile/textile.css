@@ -3,5 +3,15 @@ span.cm-italic {
 }
 
 span.cm-bold {
-    font-weight: bold;
+  font-weight: bold;
+}
+
+span.cm-footnote-citation {
+  vertical-align: super;
+  font-size: 75%;
+}
+
+span.cm-table {
+    font-family: monospace;
+    color: #660;
 }

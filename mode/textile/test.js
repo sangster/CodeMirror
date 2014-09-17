@@ -39,6 +39,9 @@
   MT('h1inline',
       '[header&header-1 h1. foo ][header&header-1&em _bar_][header&header-1 baz]');
 
+  MT('em',
+      'foo [em _bar_]');
+
   MT('strong',
       'foo [strong *bar*]');
 
@@ -140,4 +143,18 @@
       '',
       '[quote More quote.]',
       '[header&header-1 h1. Header Text]');
+
+  MT('footCite',
+      '42.7% of all statistics are made up on the spot.[footnote-citation [[1]]]');
+
+  MT('footCiteBogus',
+      '42.7% of all statistics are made up on the spot.[1a2]');
+
+  MT('footnote',
+      '[footnote fn123.] foo [strong *bar*]');
+
+  MT('table',
+      '[table |_. name |_. age|]',
+      '[table |*Walter*|   5  |]',
+      '[table |Florence|   6  |]')
 })();

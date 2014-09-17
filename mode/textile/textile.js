@@ -22,14 +22,19 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   ,   list2      = 'variable-3'
   ,   list3      = 'keyword'
   ,   quote      = 'quote'
+  ,   footnote   = 'footnote'
+  ,   footCite   = 'footnote-citation'
+  ,   table      = 'table'
   ;
   var headerRE    = /^h([1-6])\.\s+/
   ,   paragraphRE = /^(?:p|div)\.\s+/
-  ,   textRE      = /^[^_*]+/
+  ,   textRE      = /^[^_*\[]+/
   ,   ulRE        = /^(\*+)\s+/
   ,   olRE        = /^(#+)\s+/
   ,   quoteRE     = /^bq(\.\.?)\s+/
-  ,   blockRE     = /^(?:h[1-6]|p|div|bq\.?)\.\s+/
+  ,   footnoteRE  = /^fn\d+\.\s+/
+  ,   tableRE     = /^\|.*\|$/
+  ,   blockRE     = /^(?:h[1-6]|p|div|bq\.?|fn\d+)\.\s+/
   ;
 
   if (modeCfg.highlightFormatting === undefined) {
@@ -71,6 +76,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     if (state.strong) { styles.push(strong); }
     if (state.bold) { styles.push(bold); }
     if (state.quote) { styles.push(quote); }
+    if (state.footnote) { styles.push(footnote); }
+    if (state.footCite) { styles.push(footCite); }
+    if (state.table) { styles.push(table); }
 
     if (state.list !== false) {
       listMod = (state.listDepth - 1) % 3;
@@ -111,9 +119,15 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       return getType(state);
     } else if (match = stream.match(quoteRE)) {
       state.quote = true;
-      if (match[1].length === 2) { state.multilineFormat = quote; }
+      if (match[1].length === 2) {
+        state.multilineFormat = quote;
+      }
       if (modeCfg.highlightFormatting) state.formatting = 'quote';
       return getType(state);
+    } else if (stream.match(footnoteRE)) {
+      state.footnote = true;
+    } else if (stream.match(tableRE)) {
+      state.table = true;
     } else if (stream.match(paragraphRE)) {
       return getType(state);
     }
@@ -180,6 +194,10 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
           return getType(state);
         }
       }
+    } else if (ch === '[') {
+      if (stream.match(/\d+\]/)) {
+        state.footCite = true;
+      }
     }
 
     return getType(state);
@@ -227,6 +245,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
         list: false,
         quote: false,
         multilineFormat: null,
+        footnote: false,
+        footCite: false,
+        table: false,
 
         formatting: false
       };
@@ -242,6 +263,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       state.header = false;
       state.list = false;
       state.quote = false;
+      state.footnote = false;
+      state.footCite = false;
+      state.table = false;
     }
   };
 });
