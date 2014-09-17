@@ -42,14 +42,26 @@
   MT('em',
       'foo [em _bar_]');
 
+  MT('emBoogus',
+      'code_mirror');
+
   MT('strong',
       'foo [strong *bar*]');
+
+  MT('strongBogus',
+      '3 * 3 = 9');
 
   MT('italic',
       'foo [italic __bar__]');
 
+  MT('italicBoogus',
+      'code__mirror');
+
   MT('bold',
       'foo [bold **bar**]');
+
+  MT('boldBogus',
+      '3 ** 3 = 27');
 
   MT('ul',
       'foo',
@@ -171,4 +183,28 @@
 
   MT('subAndSup',
       'f(x, n) = log [sub ~4~] x [sup ^n^]');
+
+  MT('spanAndCode',
+      'A [span %span element%] and [code @code element@]');
+
+  MT('spanBogus',
+      'Percentage 25% is not a span.');
+
+  MT('citeBogus',
+      'Question? is not a cite.');
+
+  MT('codeBogus',
+      'user@example.com');
+
+  MT('subBogus',
+      '~username');
+
+  MT('supBogus',
+      'foo ^ bar');
+
+  MT('deletionBogus',
+      '3 - 3 = 0');
+
+  MT('additionBogus',
+      '3 + 3 = 6');
 })();

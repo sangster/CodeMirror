@@ -31,10 +31,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   ,   deletion    = 'deletion'
   ,   sub         = 'sub'
   ,   sup         = 'sup'
+  ,   span        = 'span'
+  ,   code        = 'code'
   ;
   var headerRE    = /^h([1-6])\.\s+/
   ,   paragraphRE = /^(?:p|div)\.\s+/
-  ,   textRE      = /^[^_*\[\(\?\+-~^]+/
+  ,   textRE      = /^[^_*\[\(\?\+-~^%@]+/
   ,   ulRE        = /^(\*+)\s+/
   ,   olRE        = /^(#+)\s+/
   ,   quoteRE     = /^bq(\.\.?)\s+/
@@ -91,6 +93,8 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     if (state.deletion) { styles.push(deletion); }
     if (state.sub) { styles.push(sub); }
     if (state.sup) { styles.push(sup); }
+    if (state.span) { styles.push(span); }
+    if (state.code) { styles.push(code); }
 
     if (state.list !== false) {
       listMod = (state.listDepth - 1) % 3;
@@ -147,15 +151,15 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     return switchInline(stream, state, state.inline);
   }
 
-  function toggleFormat(stream, state, format) {
+  function togglePhrase(stream, state, format, closeRE) {
     var type;
 
-    if (state[format]) {
+    if (state[format]) { // remove format
       if (modeCfg.highlightFormatting) state.formatting = format;
       type = getType(state);
       state[format] = false;
       return type;
-    } else {
+    } else if (stream.match(closeRE, false)) { // add format
       state[format] = true;
       if (modeCfg.highlightFormatting) state.formatting = format;
       return getType(state);
@@ -174,15 +178,15 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
     if (ch === '_') {
       if (stream.eat('_')) {
-        return toggleFormat(stream, state, 'italic');
+        return togglePhrase(stream, state, 'italic', /^.*__/);
       } else {
-        return toggleFormat(stream, state, 'em');
+        return togglePhrase(stream, state, 'em', /^.*_/);
       }
     } else if (ch === '*') {
       if (stream.eat('*')) {
-        return toggleFormat(stream, state, 'bold');
+        return togglePhrase(stream, state, 'bold', /^.*\*\*/);
       } else {
-        return toggleFormat(stream, state, 'strong');
+        return togglePhrase(stream, state, 'strong', /^.*\*/);
       }
     } else if (ch === '[') {
       if (stream.match(/\d+\]/)) {
@@ -197,15 +201,19 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
         state.specialChar = 'c';
       }
     } else if (ch === '?' && stream.eat('?')) {
-      return toggleFormat(stream, state, 'cite');
+      return togglePhrase(stream, state, 'cite', /^.*\?/);
     } else if (ch === '-') {
-      return toggleFormat(stream, state, 'deletion');
+      return togglePhrase(stream, state, 'deletion', /^.*-/);
     } else if (ch === '+') {
-      return toggleFormat(stream, state, 'addition');
+      return togglePhrase(stream, state, 'addition', /^.*\+/);
     } else if (ch === '~') {
-      return toggleFormat(stream, state, 'sub');
+      return togglePhrase(stream, state, 'sub', /^.*~/);
     } else if (ch === '^') {
-      return toggleFormat(stream, state, 'sup');
+      return togglePhrase(stream, state, 'sup', /^.*\^/);
+    } else if (ch === '%') {
+      return togglePhrase(stream, state, 'span', /^.*%/);
+    } else if (ch === '@') {
+      return togglePhrase(stream, state, 'code', /^.*@/);
     }
 
     return getType(state);
@@ -263,6 +271,8 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
         deletion: false,
         sub: false,
         sup: false,
+        span: false,
+        code: false,
 
         formatting: false
       };
@@ -287,6 +297,8 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       state.deletion = false;
       state.sub = false;
       state.sup = false;
+      state.span = false;
+      state.code = false;
     }
   };
 });
