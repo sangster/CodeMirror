@@ -246,6 +246,20 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     return state.f(stream, state);
   }
 
+  function resetPhraseModifiers(state) {
+    state.em = false;
+    state.italic = false;
+    state.strong = false;
+    state.bold = false;
+    state.addition = false;
+    state.deletion = false;
+    state.sub = false;
+    state.sup = false;
+    state.span = false;
+    state.code = false;
+    state.cite = false;
+  }
+
   return {
     startState: function() {
       return {
@@ -281,10 +295,8 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     token: token,
 
     blankLine: function(state) {
-      state.em = false;
-      state.italic = false;
-      state.strong = false;
-      state.bold = false;
+      resetPhraseModifiers(state);
+
       state.header = false;
       state.list = false;
       state.quote = false;
@@ -292,13 +304,6 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       state.footCite = false;
       state.table = false;
       state.specialChar = null;
-      state.cite = false;
-      state.addition = false;
-      state.deletion = false;
-      state.sub = false;
-      state.sup = false;
-      state.span = false;
-      state.code = false;
     }
   };
 });
