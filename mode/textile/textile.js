@@ -12,23 +12,24 @@
 "use strict";
 
 CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
-  var formatting = 'formatting'
-  ,   header     = 'header'
-  ,   em         = 'em'
-  ,   italic     = 'italic'
-  ,   strong     = 'strong'
-  ,   bold       = 'bold'
-  ,   list1      = 'variable-2'
-  ,   list2      = 'variable-3'
-  ,   list3      = 'keyword'
-  ,   quote      = 'quote'
-  ,   footnote   = 'footnote'
-  ,   footCite   = 'footnote-citation'
-  ,   table      = 'table'
+  var formatting  = 'formatting'
+  ,   header      = 'header'
+  ,   em          = 'em'
+  ,   italic      = 'italic'
+  ,   strong      = 'strong'
+  ,   bold        = 'bold'
+  ,   list1       = 'variable-2'
+  ,   list2       = 'variable-3'
+  ,   list3       = 'keyword'
+  ,   quote       = 'quote'
+  ,   footnote    = 'footnote'
+  ,   footCite    = 'footnote-citation'
+  ,   table       = 'table'
+  ,   specialChar = 'special-char'
   ;
   var headerRE    = /^h([1-6])\.\s+/
   ,   paragraphRE = /^(?:p|div)\.\s+/
-  ,   textRE      = /^[^_*\[]+/
+  ,   textRE      = /^[^_*\[\(]+/
   ,   ulRE        = /^(\*+)\s+/
   ,   olRE        = /^(#+)\s+/
   ,   quoteRE     = /^bq(\.\.?)\s+/
@@ -79,6 +80,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     if (state.footnote) { styles.push(footnote); }
     if (state.footCite) { styles.push(footCite); }
     if (state.table) { styles.push(table); }
+    if (state.specialChar) { styles.push(specialChar); styles.push(specialChar + "-" + state.specialChar); }
 
     if (state.list !== false) {
       listMod = (state.listDepth - 1) % 3;
@@ -138,8 +140,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   function inlineNormal(stream, state) {
     var style = state.text(stream, state)
     ,   ch
-    ,   t;
-
+    ,   type
+    ,   specialChar
+    ;
     if (typeof style !== 'undefined') {
       return style;
     }
@@ -150,9 +153,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       if (stream.eat('_')) {
         if(state.italic) { // Remove ITALIC
           if (modeCfg.highlightFormatting) state.formatting = 'italic';
-          t = getType(state);
+          type = getType(state);
           state.italic = false;
-          return t;
+          return type;
         } else { // Add ITALIC
           state.italic = true;
           if (modeCfg.highlightFormatting) state.formatting = 'italic';
@@ -161,9 +164,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       } else {
         if(state.em) { // Remove EM
           if (modeCfg.highlightFormatting) state.formatting = 'em';
-          t = getType(state);
+          type = getType(state);
           state.em = false;
-          return t;
+          return type;
         } else { // Add EM
           state.em = true;
           if (modeCfg.highlightFormatting) state.formatting = 'em';
@@ -174,29 +177,35 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       if (stream.eat('*')) {
         if(state.bold) { // Remove STRONG
           if (modeCfg.highlightFormatting) state.formatting = 'bold';
-          t = getType(state);
+          type = getType(state);
           state.bold = false;
-          return t;
+          return type;
         } else { // Add STRONG
           state.bold = true;
           if (modeCfg.highlightFormatting) state.formatting = 'bold';
-          return getType(state);
         }
       } else {
         if(state.strong) { // Remove STRONG
           if (modeCfg.highlightFormatting) state.formatting = 'strong';
-          t = getType(state);
+          type = getType(state);
           state.strong = false;
-          return t;
+          return type;
         } else { // Add STRONG
           state.strong = true;
           if (modeCfg.highlightFormatting) state.formatting = 'strong';
-          return getType(state);
         }
       }
     } else if (ch === '[') {
       if (stream.match(/\d+\]/)) {
         state.footCite = true;
+      }
+    } else if (ch === '(') {
+      if (stream.match('r)')) {
+        state.specialChar = 'r';
+      } else if (stream.match('tm)')) {
+        state.specialChar = 'tm';
+      } else if (stream.match('c)')) {
+        state.specialChar = 'c';
       }
     }
 
@@ -212,6 +221,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
   function token(stream, state) {
     state.formatting = false;
+    state.specialChar = null;
 
     if (stream.sol()) {
       state.f = state.block;
@@ -248,6 +258,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
         footnote: false,
         footCite: false,
         table: false,
+        specialChar: null,
 
         formatting: false
       };
@@ -266,6 +277,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       state.footnote = false;
       state.footCite = false;
       state.table = false;
+      state.specialChar = null;
     }
   };
 });

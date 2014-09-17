@@ -156,5 +156,10 @@
   MT('table',
       '[table |_. name |_. age|]',
       '[table |*Walter*|   5  |]',
-      '[table |Florence|   6  |]')
+      '[table |Florence|   6  |]');
+
+  MT('special-characters',
+      'RegisteredTrademark[special-char&special-char-r (r)], ' +
+      'Trademark[special-char&special-char-tms (tm)], and ' +
+      'Copyright [special-char&special-char-c (c)] 2008');
 })();

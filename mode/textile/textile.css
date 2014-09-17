@@ -6,7 +6,9 @@ span.cm-bold {
   font-weight: bold;
 }
 
-span.cm-footnote-citation {
+span.cm-footnote-citation,
+span.cm-special-char
+{
   vertical-align: super;
   font-size: 75%;
 }
