@@ -168,4 +168,7 @@
 
   MT('additionAndDeletion',
       'The news networks declared [deletion -Al Gore-] [addition +George W. Bush+] the winner in Florida.');
+
+  MT('subAndSup',
+      'f(x, n) = log [sub ~4~] x [sup ^n^]');
 })();
