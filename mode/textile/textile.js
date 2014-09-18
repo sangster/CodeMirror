@@ -80,7 +80,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   re.listLayout = new RegExp('^'+typeSpec.list+attrs.all+'\\s+');
 
   var tableRE     = /^\|.*\|$/
-  ,   textRE      = /^[^_*\[\(\?\+-~^%@]+/
+  ,   textRE      = /^[^_\*\[\(\?\+~\^%@-]+/
   ;
 
   if (modeCfg.highlightFormatting === undefined) {
