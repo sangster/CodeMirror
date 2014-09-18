@@ -35,6 +35,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     span:        'span',
     code:        'code',
     div:         'div',
+    pre:         'pre',
     p:           'p'
   };
   // some of there expressions are from http://github.com/borgar/textile-js

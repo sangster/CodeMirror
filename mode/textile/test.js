@@ -156,6 +156,24 @@
       '[quote More quote.]',
       '[header&header-1 h1. Header Text]');
 
+  MT('bc..ThenParagraph',
+      '[code bc.. foo bar]',
+      '',
+      '[code More.]',
+      'p. Normal Text');
+
+  MT('fn1..ThenParagraph',
+      '[footnote fn1.. foo bar]',
+      '',
+      '[footnote More.]',
+      'p. Normal Text');
+
+  MT('pre..ThenParagraph',
+      '[pre pre.. foo bar]',
+      '',
+      '[pre More.]',
+      'p. Normal Text');
+
   MT('footCite',
       '42.7% of all statistics are made up on the spot.[footnote-citation [[1]]]');
 
