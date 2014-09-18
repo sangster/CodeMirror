@@ -36,3 +36,12 @@ span.cm-addition {
 span.cm-deletion {
     text-decoration: line-through;
 }
+
+span.cm-code {
+    background-color: #ddd;
+    font-family: monospace;
+}
+
+span.cm-span {
+    background-color: #eeb;
+}

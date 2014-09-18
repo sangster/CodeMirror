@@ -34,6 +34,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   ,   span        = 'span'
   ,   code        = 'code'
   ;
+  var spannableBlocks = 'bc|bq|notextile|pre'
+  ,   blocks          = '\\*+|#+|div|fn\\d+|h[1-6]|p|' + spannableBlocks
+  ;
+  spannableBlocks = spannableBlocks.split(' ');
+  blocks = blocks.split(' ');
+
   var headerRE    = /^h([1-6])\.\s+/
   ,   paragraphRE = /^(?:p|div)\.\s+/
   ,   textRE      = /^[^_*\[\(\?\+-~^%@]+/
@@ -42,7 +48,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   ,   quoteRE     = /^bq(\.\.?)\s+/
   ,   footnoteRE  = /^fn\d+\.\s+/
   ,   tableRE     = /^\|.*\|$/
-  ,   blockRE     = /^(?:h[1-6]|p|div|bq\.?|fn\d+)\.\s+/
+  ,   blockRE     = /^(?:h[1-6]|p|div|bq\.?|fn\d+|pre\.?|bc\.?)\.\s+/
   ;
 
   if (modeCfg.highlightFormatting === undefined) {
@@ -51,11 +57,6 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
   function switchInline(stream, state, f) {
     state.f = state.inline = f;
-    return f(stream, state);
-  }
-
-  function switchBlock(stream, state, f) {
-    state.f = state.block = f;
     return f(stream, state);
   }
 
@@ -78,7 +79,6 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       }
     }
 
-    if (state.header) { styles.push(header); styles.push(header + "-" + state.header); }
     if (state.em) { styles.push(em); }
     if (state.italic) { styles.push(italic); }
     if (state.strong) { styles.push(strong); }
@@ -87,7 +87,6 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     if (state.footnote) { styles.push(footnote); }
     if (state.footCite) { styles.push(footCite); }
     if (state.table) { styles.push(table); }
-    if (state.specialChar) { styles.push(specialChar); styles.push(specialChar + "-" + state.specialChar); }
     if (state.cite) { styles.push(cite); }
     if (state.addition) { styles.push(addition); }
     if (state.deletion) { styles.push(deletion); }
@@ -95,6 +94,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     if (state.sup) { styles.push(sup); }
     if (state.span) { styles.push(span); }
     if (state.code) { styles.push(code); }
+
+    if (state.header) { styles.push(header); styles.push(header + "-" + state.header); }
+    if (state.specialChar) { styles.push(specialChar); styles.push(specialChar + "-" + state.specialChar); }
 
     if (state.list !== false) {
       listMod = (state.listDepth - 1) % 3;

@@ -37,7 +37,7 @@
       'h7. foo');
 
   MT('h1inline',
-      '[header&header-1 h1. foo ][header&header-1&em _bar_][header&header-1 baz]');
+      '[header&header-1 h1. foo ][header&header-1&em _bar_][header&header-1  baz]');
 
   MT('em',
       'foo [em _bar_]');
@@ -54,7 +54,7 @@
   MT('italic',
       'foo [italic __bar__]');
 
-  MT('italicBoogus',
+  MT('italicBogus',
       'code__mirror');
 
   MT('bold',
