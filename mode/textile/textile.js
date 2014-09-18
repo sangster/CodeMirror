@@ -12,43 +12,74 @@
 "use strict";
 
 CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
-  var formatting  = 'formatting'
-  ,   header      = 'header'
-  ,   em          = 'em'
-  ,   italic      = 'italic'
-  ,   strong      = 'strong'
-  ,   bold        = 'bold'
-  ,   list1       = 'variable-2'
-  ,   list2       = 'variable-3'
-  ,   list3       = 'keyword'
-  ,   quote       = 'quote'
-  ,   footnote    = 'footnote'
-  ,   footCite    = 'footnote-citation'
-  ,   table       = 'table'
-  ,   specialChar = 'special-char'
-  ,   cite        = 'cite'
-  ,   addition    = 'addition'
-  ,   deletion    = 'deletion'
-  ,   sub         = 'sub'
-  ,   sup         = 'sup'
-  ,   span        = 'span'
-  ,   code        = 'code'
-  ;
-  var spannableBlocks = 'bc|bq|notextile|pre'
-  ,   blocks          = '\\*+|#+|div|fn\\d+|h[1-6]|p|' + spannableBlocks
-  ;
-  spannableBlocks = spannableBlocks.split(' ');
-  blocks = blocks.split(' ');
+  var format = {
+    formatting:  'formatting',
+    header:      'header',
+    em:          'em',
+    italic:      'italic',
+    strong:      'strong',
+    bold:        'bold',
+    list1:       'variable-2',
+    list2:       'variable-3',
+    list3:       'keyword',
+    quote:       'quote',
+    footnote:    'footnote',
+    footCite:    'footnote-citation',
+    table:       'table',
+    specialChar: 'special-char',
+    cite:        'cite',
+    addition:    'addition',
+    deletion:    'deletion',
+    sub:         'sub',
+    sup:         'sup',
+    span:        'span',
+    code:        'code',
+    div:         'div',
+    p:           'p'
+  };
+  // some of there expressions are from http://github.com/borgar/textile-js
+  var typeSpec = {
+    header:    'h[1-6]',
+    para:      'p',
+    foot:      'fn\\d+',
+    div:       'div',
+    bc:        'bc',
+    bq:        'bq',
+    notextile: 'notextile',
+    pre:       'pre',
+    list:      '^(?:#+|\\*+)'
+  };
+  typeSpec.all = [typeSpec.div, typeSpec.foot, typeSpec.header, typeSpec.bc,
+    typeSpec.bq, typeSpec.notextile, typeSpec.pre, typeSpec.para].join('|');
 
-  var headerRE    = /^h([1-6])\.\s+/
-  ,   paragraphRE = /^(?:p|div)\.\s+/
+  var attrs = {
+    class: '\\([^\\)]+\\)',
+    style: '\\{[^\\}]+\\}',
+    lang:  '\\[[^\\[\\]]+\\]',
+    align: '(?:<>|<|>|=)',
+    pad:   '[\\(\\)]+'
+  };
+  attrs.all = '(?:'+[attrs.class, attrs.style, attrs.lang, attrs.align, attrs.pad].join('|')+')*';
+
+  var re = {
+    header:    new RegExp('^'+typeSpec.header),
+    para:      new RegExp('^'+typeSpec.para),
+    foot:      new RegExp('^'+typeSpec.foot),
+    div:       new RegExp('^'+typeSpec.div),
+    bc:        new RegExp('^'+typeSpec.bc),
+    bq:        new RegExp('^'+typeSpec.bq),
+    notextile: new RegExp('^'+typeSpec.notextile),
+    pre:       new RegExp('^'+typeSpec.pre),
+    list:      new RegExp('^'+typeSpec.list),
+
+    attrs:     new RegExp('^'+attrs.all)
+  };
+  re.type       = new RegExp('^(?:'+typeSpec.all+')');
+  re.typeLayout = new RegExp('^(?:'+typeSpec.all+')'+attrs.all+'\\.\\.?\\s+');
+  re.listLayout = new RegExp('^'+typeSpec.list+attrs.all+'\\s+');
+
+  var tableRE     = /^\|.*\|$/
   ,   textRE      = /^[^_*\[\(\?\+-~^%@]+/
-  ,   ulRE        = /^(\*+)\s+/
-  ,   olRE        = /^(#+)\s+/
-  ,   quoteRE     = /^bq(\.\.?)\s+/
-  ,   footnoteRE  = /^fn\d+\.\s+/
-  ,   tableRE     = /^\|.*\|$/
-  ,   blockRE     = /^(?:h[1-6]|p|div|bq\.?|fn\d+|pre\.?|bc\.?)\.\s+/
   ;
 
   if (modeCfg.highlightFormatting === undefined) {
@@ -56,7 +87,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function switchInline(stream, state, f) {
-    state.f = state.inline = f;
+    state.func = state.inlineFunc = f;
+    return f(stream, state);
+  }
+
+  function switchBlock(stream, state, f) {
+    state.func = state.blockFunc = f;
     return f(stream, state);
   }
 
@@ -66,91 +102,133 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     ;
 
     if (state.formatting) {
-      styles.push(formatting);
+      styles.push(format.formatting);
 
       if (typeof state.formatting === "string") state.formatting = [state.formatting];
 
       for (var i = 0; i < state.formatting.length; i++) {
-        styles.push(formatting + "-" + state.formatting[i]);
+        styles.push(format.formatting + "-" + state.formatting[i]);
 
         if (state.formatting[i] === "header") {
-          styles.push(formatting + "-" + state.formatting[i] + "-" + state.header);
+          styles.push(format.formatting + "-" + state.formatting[i] + "-" + state.header);
         }
       }
     }
 
-    if (state.em) { styles.push(em); }
-    if (state.italic) { styles.push(italic); }
-    if (state.strong) { styles.push(strong); }
-    if (state.bold) { styles.push(bold); }
-    if (state.quote) { styles.push(quote); }
-    if (state.footnote) { styles.push(footnote); }
-    if (state.footCite) { styles.push(footCite); }
-    if (state.table) { styles.push(table); }
-    if (state.cite) { styles.push(cite); }
-    if (state.addition) { styles.push(addition); }
-    if (state.deletion) { styles.push(deletion); }
-    if (state.sub) { styles.push(sub); }
-    if (state.sup) { styles.push(sup); }
-    if (state.span) { styles.push(span); }
-    if (state.code) { styles.push(code); }
+    // Block Type
+    if ( state.type ) { styles.push(format[state.type]); }
 
-    if (state.header) { styles.push(header); styles.push(header + "-" + state.header); }
-    if (state.specialChar) { styles.push(specialChar); styles.push(specialChar + "-" + state.specialChar); }
+    // Phrase modifiers
+    if (state.em) { styles.push(format.em); }
+    if (state.italic) { styles.push(format.italic); }
+    if (state.strong) { styles.push(format.strong); }
+    if (state.bold) { styles.push(format.bold); }
+    if (state.footCite) { styles.push(format.footCite); }
+    if (state.table) { styles.push(format.table); }
+    if (state.cite) { styles.push(format.cite); }
+    if (state.addition) { styles.push(format.addition); }
+    if (state.deletion) { styles.push(format.deletion); }
+    if (state.sub) { styles.push(format.sub); }
+    if (state.sup) { styles.push(format.sup); }
+    if (state.span) { styles.push(format.span); }
+    if (state.code) { styles.push(format.code); }
 
-    if (state.list !== false) {
-      listMod = (state.listDepth - 1) % 3;
-      if (!listMod) {
-        styles.push(list1);
-      } else if (listMod === 1) {
-        styles.push(list2);
-      } else {
-        styles.push(list3);
-      }
-    }
+    if (state.type === 'header') { styles.push(format.header + "-" + state.header); }
+    if (state.specialChar) { styles.push(format.specialChar); styles.push(format.specialChar + "-" + state.specialChar); }
 
     return styles.length ? styles.join(' ') : null;
   }
 
-  function blockNormal(stream, state) {
+  function blockType(stream, state) {
     var match
-    ,   listType
+    ,   type
     ;
-    if (stream.eatSpace()) {
-      return getType(state);
-    } else if (match = stream.match(headerRE)) {
-      state.header = parseInt(match[1]);
-      if (modeCfg.highlightFormatting) state.formatting = 'header';
-      return getType(state);
-    } else if (stream.match(ulRE, false) || stream.match(olRE, false)) {
-      if (match = stream.match(ulRE, true)) {
-        listType = 'ul';
-      } else {
-        match = stream.match(olRE, true);
-        listType = 'ol';
-      }
+    state.type = null;
 
-      state.list = true;
-      state.listDepth = match[1].length;
-      state.f = state.inline;
-      if (modeCfg.highlightFormatting) state.formatting = ["list", "list-" + listType];
-      return getType(state);
-    } else if (match = stream.match(quoteRE)) {
-      state.quote = true;
-      if (match[1].length === 2) {
-        state.multilineFormat = quote;
-      }
-      if (modeCfg.highlightFormatting) state.formatting = 'quote';
-      return getType(state);
-    } else if (stream.match(footnoteRE)) {
-      state.footnote = true;
+    if (match = stream.match(re.type)) {
+      type = match[0]
+    } else {
+      return switchInline(stream, state, state.inlineFunc);
+    }
+
+    if(match = type.match(re.header)) {
+      state.type = 'header';
+      state.header = parseInt(match[0][1]);
+    } else if (type.match(re.bq)) {
+      state.type = 'quote';
+    } else if (type.match(re.bc)) {
+      state.type = 'code';
+    } else if (type.match(re.foot)) {
+      state.type = 'footnote';
+    } else if (type.match(re.notextile)) {
+      state.type = 'notextile';
+    } else if (type.match(re.pre)) {
+      state.type = 'pre';
+    } else if (type.match(re.div)) {
+      state.type = 'div';
+    }
+
+    state.func = state.inlineFunc = state.attrsFunc;
+    return getType(state);
+  }
+
+  function attrsFunc(stream, state) {
+    var t
+    ,   style = ''
+    ;
+    if (stream.match(attrs.all)) {
+      style = 'attributes';
+    }
+
+    state.func = state.inlineFunc = state.typeLenFunc;
+    t = getType(state);
+    return t;//(t.length ? (t + ' ') : '') + style;
+  }
+
+  function typeLenFunc(stream, state) {
+    if (stream.eat('.') && stream.eat('.')) {
+      state.multiBlock = true;
+    }
+
+    state.func = state.inlineFunc = state.normalFunc;
+    return getType(state);
+  }
+
+  function listFunc(stream, state) {
+    var match    = stream.match(re.list)
+    ,   listType
+    ,   listMod
+    ;
+
+    state.listDepth = match[0].length;
+    listMod = (state.listDepth - 1) % 3;
+    if (!listMod) {
+      state.type = 'list1';
+    } else if (listMod === 1) {
+      state.type = 'list2';
+    } else {
+      state.type = 'list3';
+    }
+    if (modeCfg.highlightFormatting) {
+      listType = (match[0][0] === '#' ? 'ol' : 'ul');
+      state.formatting = ["list", "list-" + listType];
+    }
+    state.func = state.inlineFunc = state.attrsFunc;
+    return getType(state);
+  }
+
+  function blockNormal(stream, state) {
+    if (stream.match(re.typeLayout, false)) {
+      state.multiBlock = false;
+      return switchBlock(stream, state, state.typeFunc);
+    } else if (stream.match(re.listLayout, false)) {
+      return switchBlock(stream, state, state.listFunc);
     } else if (stream.match(tableRE)) {
-      state.table = true;
-    } else if (stream.match(paragraphRE)) {
+      state.type = 'table';
       return getType(state);
     }
 
-    return switchInline(stream, state, state.inline);
+    return switchInline(stream, state, state.inlineFunc);
   }
 
   function togglePhrase(stream, state, format, closeRE) {
@@ -169,7 +247,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function inlineNormal(stream, state) {
-    var style = state.text(stream, state)
+    var style = state.textFunc(stream, state)
     ,   ch
     ;
     if (typeof style !== 'undefined') {
@@ -233,19 +311,10 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     state.specialChar = null;
 
     if (stream.sol()) {
-      state.f = state.block;
-
-      if (state.multilineFormat) {
-        if (stream.match(blockRE, false)) {
-          state[state.multilineFormat] = false;
-          state.multilineFormat = null;
-        } else {
-          state[state.multilineFormat] = true;
-        }
-      }
+      state.func = state.blockFunc;
     }
 
-    return state.f(stream, state);
+    return state.func(stream, state);
   }
 
   function resetPhraseModifiers(state) {
@@ -265,23 +334,24 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   return {
     startState: function() {
       return {
-        f: blockNormal,
-        inline: inlineNormal,
-        block: blockNormal,
-        text: handleText,
+        func: blockNormal,
+        inlineFunc: inlineNormal,
+        normalFunc: inlineNormal,
+        blockFunc: blockNormal,
+        textFunc: handleText,
+        typeFunc: blockType,
+        attrsFunc: attrsFunc,
+        listFunc: listFunc,
+        typeLenFunc: typeLenFunc,
+
+        type: null,
+        header: false,
+        list: false,
 
         em: false,
         italic: false,
         strong: false,
         bold: false,
-        header: false,
-        list: false,
-        quote: false,
-        multilineFormat: null,
-        footnote: false,
-        footCite: false,
-        table: false,
-        specialChar: null,
         cite: false,
         addition: false,
         deletion: false,
@@ -289,7 +359,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
         sup: false,
         span: false,
         code: false,
+        footCite: false,
 
+        table: false,
+        specialChar: null,
+
+        multiBlock: false,
         formatting: false
       };
     },
@@ -299,10 +374,13 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     blankLine: function(state) {
       resetPhraseModifiers(state);
 
+      state.func = state.blockFunc = blockNormal;
+
+      if (!state.multiBlock) {
+        state.type = null;
+      }
       state.header = false;
       state.list = false;
-      state.quote = false;
-      state.footnote = false;
       state.footCite = false;
       state.table = false;
       state.specialChar = null;

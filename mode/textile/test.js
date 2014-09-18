@@ -8,9 +8,9 @@
   function FT(name) { test.mode(name, modeHighlightFormatting, Array.prototype.slice.call(arguments, 1)); }
 
 
-  FT('simple_header',
-      '[formatting&formatting-header&formatting-header-1&header&header-1 h1. ]' +
-      '[header&header-1 Give RedCloth a try!]');
+//  FT('simple_header',
+//      '[formatting&formatting-header&formatting-header-1&header&header-1 h1. ]' +
+//      '[header&header-1 Give RedCloth a try!]');
 
   MT('plainText',
       'This is some text.');
@@ -131,13 +131,13 @@
       'p. foo bar');
 
   MT('div',
-      'div. foo bar');
+      '[div div. foo bar]');
 
   MT('paragraphFormatting',
       'p. [strong *foo ][strong&em _bar_][strong *]');
 
   MT('divFormatting',
-      'div. [strong *foo ][strong&em _bar_][strong *]');
+      '[div div. ][div&strong *foo ][div&strong&em _bar_][div&strong *]');
 
   MT('bq.',
       '[quote bq. foo bar]',
