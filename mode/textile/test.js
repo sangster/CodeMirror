@@ -188,6 +188,12 @@
       '[table |*Walter*|   5  |]',
       '[table |Florence|   6  |]');
 
+  MT('tableWithTag',
+      '[table table.]',
+      '[table |_. name |_. age|]',
+      '[table |*Walter*|   5  |]',
+      '[table |Florence|   6  |]');
+
   MT('special-characters',
       'RegisteredTrademark[special-char&special-char-r (r)], ' +
       'Trademark[special-char&special-char-tm (tm)], and ' +

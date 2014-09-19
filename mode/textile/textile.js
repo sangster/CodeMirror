@@ -48,10 +48,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     bq:        'bq',
     notextile: 'notextile',
     pre:       'pre',
+    table:     'table',
     list:      '^(?:#+|\\*+)'
   };
   typeSpec.all = [typeSpec.div, typeSpec.foot, typeSpec.header, typeSpec.bc,
-    typeSpec.bq, typeSpec.notextile, typeSpec.pre, typeSpec.para].join('|');
+    typeSpec.bq, typeSpec.notextile, typeSpec.pre, typeSpec.table,
+    typeSpec.para].join('|');
 
   var attrs = {
     class: '\\([^\\)]+\\)',
@@ -72,11 +74,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     notextile: new RegExp('^'+typeSpec.notextile),
     pre:       new RegExp('^'+typeSpec.pre),
     list:      new RegExp('^'+typeSpec.list),
+    table:     new RegExp('^'+typeSpec.table),
 
     attrs:     new RegExp('^'+attrs.all)
   };
   re.type       = new RegExp('^(?:'+typeSpec.all+')');
-  re.typeLayout = new RegExp('^(?:'+typeSpec.all+')'+attrs.all+'\\.\\.?\\s+');
+  re.typeLayout = new RegExp('^(?:'+typeSpec.all+')'+attrs.all+'\\.\\.?(\\s+|$)');
   re.listLayout = new RegExp('^'+typeSpec.list+attrs.all+'\\s+');
 
   var tableRE     = /^\|.*\|$/
@@ -167,6 +170,8 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       state.type = 'pre';
     } else if (type.match(re.div)) {
       state.type = 'div';
+    } else if (type.match(re.table)) {
+      state.type = 'table';
     }
 
     state.func = state.inlineFunc = state.attrsFunc;
@@ -221,7 +226,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   function blockNormal(stream, state) {
     if (stream.match(re.typeLayout, false)) {
       state.multiBlock = false;
-      return switchBlock(stream, state, state.typeFunc);
+      return switchInline(stream, state, state.typeFunc);
     } else if (stream.match(re.listLayout, false)) {
       return switchBlock(stream, state, state.listFunc);
     } else if (stream.match(tableRE)) {
