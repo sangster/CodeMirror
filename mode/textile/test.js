@@ -184,14 +184,8 @@
       '[footnote fn123. foo ][footnote&strong *bar*]');
 
   MT('table',
-      '[table |_. name |_. age|]',
-      '[table |*Walter*|   5  |]',
-      '[table |Florence|   6  |]');
-
-  MT('tableWithTag',
-      '[table table.]',
-      '[table |_. name |_. age|]',
-      '[table |*Walter*|   5  |]',
+      '[table&table-heading |_. name |_. age|]',
+      '[table |][table&strong *Walter*][table |   5  |]',
       '[table |Florence|   6  |]');
 
   MT('special-characters',
