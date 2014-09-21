@@ -150,8 +150,41 @@
   MT('divWithClassAndId',
       '[div div][div&attributes (my-class#my-id)][div . foo bar]');
 
-  MT('paragraphFormatting',
+  MT('paragraphWithCss',
+      'p[attributes {color:blue;letter-spacing:.5em}]. Spacey blue');
+
+  MT('paragraphNestedStyles',
       'p. [strong *foo ][strong&em _bar_][strong *]');
+
+  MT('paragraphWithLanguage',
+      'p[attributes [[fr]]]. Parlez-vous français?');
+
+  MT('paragraphLeftAlign',
+      'p[attributes <]. Left');
+
+  MT('paragraphRightAlign',
+      'p[attributes >]. Right');
+
+  MT('paragraphRightAlign',
+      'p[attributes =]. Center');
+
+  MT('paragraphJustified',
+      'p[attributes <>]. Justified');
+
+  MT('paragraphWithLeftIndent1em',
+      'p[attributes (]. Left');
+
+  MT('paragraphWithRightIndent1em',
+      'p[attributes )]. Right');
+
+  MT('paragraphWithLeftIndent2em',
+      'p[attributes ((]. Left');
+
+  MT('paragraphWithRightIndent2em',
+      'p[attributes ))]. Right');
+
+  MT('paragraphWithLeftIndent3emRightIndent2em',
+      'p[attributes ((())]. Right');
 
   MT('divFormatting',
       '[div div. ][div&strong *foo ][div&strong&em _bar_][div&strong *]');
@@ -242,4 +275,9 @@
 
   MT('additionBogus',
       '3 + 3 = 6');
+
+  MT('moo',
+      'p[attributes (my-class)]. This is a paragraph that has a class and' +
+        ' this [em _][em&attributes (#special-phrase)][em emphasized phrase_]' +
+        ' has an id.');
 })();

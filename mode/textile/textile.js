@@ -207,7 +207,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       state.type = 'table';
     }
 
-    state.func = state.inlineFunc = attrsFunc;
+    state.func = attrsFunc;
     return getType(state);
   }
 
@@ -309,6 +309,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     } else if (stream.match(closeRE, false)) { // add format
       state[format] = true;
       if (modeCfg.highlightFormatting) state.formatting = format;
+      state.func = attrsFunc;
       return getType(state);
     }
   }
@@ -331,7 +332,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       listType = (match[0][0] === '#' ? 'ol' : 'ul');
       state.formatting = ["list", "list-" + listType];
     }
-    state.func = state.inlineFunc = attrsFunc;
+    state.func = attrsFunc;
     return getType(state);
   }
 
