@@ -25,6 +25,12 @@ span.cm-table {
     color: #660;
 }
 
+span.cm-table-heading {
+    font-family: monospace;
+    background-color: #660;
+    color: #fff;
+}
+
 span.cm-cite {
     font-style: italic;
 }
@@ -44,4 +50,8 @@ span.cm-code {
 
 span.cm-span {
     background-color: #eeb;
+}
+
+span.cm-attributes {
+    color: #002D57;
 }

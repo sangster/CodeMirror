@@ -133,6 +133,12 @@
   MT('div',
       '[div div. foo bar]');
 
+  MT('divWithAttribute',
+      '[div div][div&attributes ((][div . foo bar]');
+
+  MT('divWithClassAndId',
+      '[div div][div&attributes (myclass#myid)][div . foo bar]');
+
   MT('paragraphFormatting',
       'p. [strong *foo ][strong&em _bar_][strong *]');
 

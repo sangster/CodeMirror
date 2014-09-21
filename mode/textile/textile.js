@@ -208,13 +208,13 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     var type
     ,   style = ''
     ;
-    if (stream.match(attrs.all)) {
+    if (stream.match(re.attrs)) {
       style = 'attributes';
     }
 
     state.func = state.inlineFunc = typeLenFunc;
     type = getType(state);
-    return type;//(t.length ? (t + ' ') : '') + style;
+    return (type ? (type + ' ') : '') + style;
   }
 
   function typeLenFunc(stream, state) {
