@@ -15,6 +15,14 @@
   MT('plainText',
       'This is some text.');
 
+  MT('simpleLink',
+      '[link "CodeMirror":http://codemirror.net]');
+
+  MT('referenceLink',
+      '[link "CodeMirror":code_mirror]',
+      'Normal Text.',
+      '[link-definition [[code_mirror]]http://redcloth.org]');
+
   MT('h1',
       '[header&header-1 h1. foo]');
 
