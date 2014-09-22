@@ -238,6 +238,10 @@
       '[table |][table&strong *Walter*][table |   5  |]',
       '[table |Florence|   6  |]');
 
+  MT('tableWithSpans',
+      '[table&table-heading |_. name |_. age|]',
+      '[table |][table&attributes \\2][table . Jim |]',
+
   MT('special-characters',
       'RegisteredTrademark[special-char&special-char-r (r)], ' +
       'Trademark[special-char&special-char-tm (tm)], and ' +

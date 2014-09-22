@@ -20,6 +20,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
   var format = {
     addition:     'addition',
+    attributes:   'attributes',
     bold:         'bold',
     cite:         'cite',
     code:         'code',
@@ -62,7 +63,8 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     para:         'p',
     pre:          'pre',
     table:        'table',
-    tableHeading:  '\\|_\\.',
+    tableAttrs:   '[/\\\\]\\d+',
+    tableHeading: '\\|_\\.',
     tableText:    '[^"_\\*\\[\\(\\?\\+~\\^%@|-]+',
     text:         '[^"_\\*\\[\\(\\?\\+~\\^%@-]+'
   };
@@ -77,7 +79,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     pad:   '[\\(\\)]+',
     style: '\\{[^\\}]+\\}'
   };
-  attrs.all = '(?:'+[attrs.class, attrs.style, attrs.lang, attrs.align, attrs.pad].join('|')+')*';
+  attrs.all = '(?:'+[attrs.class, attrs.style, attrs.lang, attrs.align, attrs.pad].join('|')+')+';
 
   var re = {
     bc:           new RegExp('^'+typeSpec.bc),
@@ -95,11 +97,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     tableText:    new RegExp('^'+typeSpec.tableText),
     text:         new RegExp('^'+typeSpec.text),
     table:        new RegExp('^'+typeSpec.table),
+    tableAttrs:   new RegExp('^'+typeSpec.tableAttrs),
     tableHeading: new RegExp('^'+typeSpec.tableHeading),
     type:         new RegExp('^(?:'+typeSpec.all+')'),
     typeLayout:   new RegExp('^(?:'+typeSpec.all+')'+attrs.all+'\\.\\.?(\\s+|$)'),
 
-    attrs:      new RegExp('^'+attrs.all)
+    attrs:        new RegExp('^'+attrs.all)
   };
 
   if (modeCfg.highlightFormatting === undefined) {
@@ -215,7 +218,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     state.func = state.inlineFunc = typeLenFunc;
 
     if (stream.match(re.attrs)) {
-      return getType(state, 'attributes');
+      return getType(state, format['attributes']);
     }
     return getType(state);
   }
@@ -353,7 +356,24 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     } else {
       stream.eat('|');
     }
+    state.func = state.inlineFunc = tableCellAttrsFunc;
+    return getType(state);
+  }
+
+  function tableCellAttrsFunc(stream, state) {
+    var attrsPresent;
     state.func = state.inlineFunc = inlineTable;
+
+    if (stream.match(re.tableAttrs)) {
+      attrsPresent = true;
+    }
+    if (stream.match(re.attrs)) {
+      attrsPresent = true;
+    }
+    if (attrsPresent) {
+      return getType(state, format['attributes']);
+    }
+
     return getType(state);
   }
 
