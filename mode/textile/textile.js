@@ -1,7 +1,7 @@
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
-(function(mod) {
+!(function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     mod(require("../../lib/codemirror"));
   else if (typeof define == "function" && define.amd) // AMD
@@ -13,96 +13,124 @@
 
 CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   var mode = {
-    token:      token,
+    token: token,
     startState: startState,
-    blankLine:  blankLine
+    blankLine: blankLine
   };
 
   var format = {
-    addition:     'addition',
-    attributes:   'attributes',
-    bold:         'bold',
-    cite:         'cite',
-    code:         'code',
-    deletion:     'deletion',
-    div:          'div',
-    em:           'em',
-    footnote:     'footnote',
-    footCite:     'footnote-citation',
-    formatting:   'formatting',
-    header:       'header',
-    italic:       'italic',
-    link:         'link',
-    linkDef:      'link-definition',
-    list1:        'variable-2',
-    list2:        'variable-3',
-    list3:        'keyword',
-    pre:          'pre',
-    p:            'p',
-    quote:        'quote',
-    span:         'span',
-    specialChar:  'special-char',
-    strong:       'strong',
-    sub:          'sub',
-    sup:          'sup',
-    table:        'table',
+    addition: 'addition',
+    attributes: 'attributes',
+    bold: 'bold',
+    cite: 'cite',
+    code: 'code',
+    deletion: 'deletion',
+    div: 'div',
+    em: 'em',
+    footnote: 'footnote',
+    footCite: 'footnote-citation',
+    formatting: 'formatting',
+    header: 'header',
+    italic: 'italic',
+    link: 'link',
+    linkDef: 'link-definition',
+    list1: 'variable-2',
+    list2: 'variable-3',
+    list3: 'keyword',
+    pre: 'pre',
+    p: 'p',
+    quote: 'quote',
+    span: 'span',
+    specialChar: 'special-char',
+    strong: 'strong',
+    sub: 'sub',
+    sup: 'sup',
+    table: 'table',
     tableHeading: 'table-heading'
   };
 
+  function makeRe() {
+    var pattern = '',
+        length = arguments.length,
+        i,
+        arg;
+
+    for (i = 0; i < length; ++i) {
+      arg = arguments[i];
+      pattern += (typeof arg === 'string') ? arg : arg.source;
+    }
+    return new RegExp(pattern);
+  }
+
+  function choiceRe() {
+    var parts = [arguments[0]],
+        length = arguments.length,
+        i;
+
+    for (i = 1; i < length; ++i) {
+      parts[i * 2 - 1] = '|';
+      parts[i * 2] = arguments[i];
+    }
+
+    parts.unshift('(?:');
+    parts.push(')');
+    return makeRe.apply(this, parts);
+  }
+
   // some of there expressions are from http://github.com/borgar/textile-js
   var typeSpec = {
-    bc:           'bc',
-    bq:           'bq',
-    div:          'div',
-    drawTable:    '\\|.*\\|',
-    foot:         'fn\\d+',
-    header:       'h[1-6]',
-    linkDef:      '\\[[^\\s\\]]+\\]\\S+',
-    list:         '^(?:#+|\\*+)',
-    notextile:    'notextile',
-    para:         'p',
-    pre:          'pre',
-    table:        'table',
-    tableAttrs:   '[/\\\\]\\d+',
-    tableHeading: '\\|_\\.',
-    tableText:    '[^"_\\*\\[\\(\\?\\+~\\^%@|-]+',
-    text:         '[^"_\\*\\[\\(\\?\\+~\\^%@-]+'
+    bc: 'bc',
+    bq: 'bq',
+    div: 'div',
+    drawTable: /\|.*\|/,
+    foot: /fn\d+/,
+    header: /h[1-6]/,
+    linkDef: /\[[^\s\]]+\]\S+/,
+    list: /(?:#+|\*+)/,
+    notextile: 'notextile',
+    para: 'p',
+    pre: 'pre',
+    table: 'table',
+    tableAttrs: /[/\\]\d+/,
+    tableHeading: /\|_\./,
+    tableText: /[^"_\*\[\(\?\+~\^%@|-]+/,
+    text: /[^"_\*\[\(\?\+~\^%@-]+/
   };
-  typeSpec.all = [typeSpec.div, typeSpec.foot, typeSpec.header, typeSpec.bc,
-    typeSpec.bq, typeSpec.notextile, typeSpec.pre, typeSpec.table,
-    typeSpec.para].join('|');
+  typeSpec.all = choiceRe(typeSpec.div, typeSpec.foot, typeSpec.header,
+      typeSpec.bc, typeSpec.bq, typeSpec.notextile, typeSpec.pre,
+      typeSpec.table, typeSpec.para);
 
   var attrs = {
-    align: '(?:<>|<|>|=)',
-    class: '\\([^\\)]+\\)',
-    lang:  '\\[[^\\[\\]]+\\]',
-    pad:   '[\\(\\)]+',
-    style: '\\{[^\\}]+\\}'
+    align: /(?:<>|<|>|=)/,
+    selector: /\([^\(][^\)]+\)/,
+    lang: /\[[^\[\]]+\]/,
+    pad: /(?:\(+|\)+){1,2}/,
+    css: /\{[^\}]+\}/
   };
-  attrs.all = '(?:'+[attrs.class, attrs.style, attrs.lang, attrs.align, attrs.pad].join('|')+')+';
+  attrs.all = choiceRe(attrs.selector, attrs.css, attrs.lang, attrs.align, attrs.pad);
 
   var re = {
-    bc:           new RegExp('^'+typeSpec.bc),
-    bq:           new RegExp('^'+typeSpec.bq),
-    div:          new RegExp('^'+typeSpec.div),
-    drawTable:    new RegExp('^'+typeSpec.drawTable+'$'),
-    foot:         new RegExp('^'+typeSpec.foot),
-    header:       new RegExp('^'+typeSpec.header),
-    linkDef:      new RegExp('^'+typeSpec.linkDef+'$'),
-    list:         new RegExp('^'+typeSpec.list),
-    listLayout:   new RegExp('^'+typeSpec.list+attrs.all+'\\s+'),
-    notextile:    new RegExp('^'+typeSpec.notextile),
-    para:         new RegExp('^'+typeSpec.para),
-    pre:          new RegExp('^'+typeSpec.pre),
-    tableText:    new RegExp('^'+typeSpec.tableText),
-    text:         new RegExp('^'+typeSpec.text),
-    table:        new RegExp('^'+typeSpec.table),
-    tableAttrs:   new RegExp('^'+typeSpec.tableAttrs),
-    tableHeading: new RegExp('^'+typeSpec.tableHeading),
-    type:         new RegExp('^(?:'+typeSpec.all+')'),
-    typeLayout:   new RegExp('^(?:'+typeSpec.all+')'+attrs.all+'\\.\\.?(\\s+|$)'),
+    bc: makeRe('^', typeSpec.bc),
+    bq: makeRe('^', typeSpec.bq),
+    div: makeRe('^', typeSpec.div),
+    drawTable: makeRe('^', typeSpec.drawTable, '$'),
+    foot: makeRe('^', typeSpec.foot),
+    header: makeRe('^', typeSpec.header),
+    linkDef: makeRe('^', typeSpec.linkDef, '$'),
+    list: makeRe('^', typeSpec.list),
+    listLayout: makeRe('^', typeSpec.list, attrs.all, '*\\s+'),
+    notextile: makeRe('^', typeSpec.notextile),
+    para: makeRe('^', typeSpec.para),
+    pre: makeRe('^', typeSpec.pre),
+    tableText: makeRe('^', typeSpec.tableText),
+    text: makeRe('^', typeSpec.text),
+    table: makeRe('^', typeSpec.table),
+    tableAttrs: makeRe('^', typeSpec.tableAttrs),
+    tableHeading: makeRe('^', typeSpec.tableHeading),
+    type: makeRe('^', typeSpec.all),
+    typeLayout: makeRe('^', typeSpec.all, attrs.all, '*\\.\\.?(\\s+|$)'),
 
-    attrs:        new RegExp('^'+attrs.all)
+    attrs: makeRe('^', attrs.all, '+')
   };
 
   if (modeCfg.highlightFormatting === undefined) {
@@ -123,31 +151,31 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
   function startState() {
     return {
-      func:       blockNormal,
-      blockFunc:  blockNormal,
+      func: blockNormal,
+      blockFunc: blockNormal,
       inlineFunc: inlineNormal,
 
-      type:   null,
+      type: null,
       header: false,
-      list:   false,
+      list: false,
 
       addition: false,
-      bold:     false,
-      cite:     false,
-      code:     false,
+      bold: false,
+      cite: false,
+      code: false,
       deletion: false,
-      em:       false,
+      em: false,
       footCite: false,
-      italic:   false,
-      link:     false,
-      span:     false,
-      strong:   false,
-      sub:      false,
-      sup:      false,
+      italic: false,
+      link: false,
+      span: false,
+      strong: false,
+      sub: false,
+      sup: false,
 
-      table:        false,
+      table: false,
       tableHeading: false,
-      specialChar:  null,
+      specialChar: null,
 
       multiBlock: false,
       formatting: false
@@ -180,13 +208,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function blockType(stream, state) {
-    var match
-    ,   type
-    ;
+    var match,
+        type;
     state.type = null;
 
     if (match = stream.match(re.type)) {
-      type = match[0]
+      type = match[0];
     } else {
       return switchInline(stream, state, state.inlineFunc);
     }
@@ -233,13 +260,11 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function inlineNormal(stream, state) {
-    var ch
-    ;
     if (stream.match(re.text, true)) {
       return getType(state);
     }
 
-    ch = stream.next();
+    var ch = stream.next();
 
     if (ch === '"') {
       return switchInline(stream, state, linkFunc);
@@ -302,11 +327,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function togglePhrase(stream, state, format, closeRE) {
-    var type;
-
     if (state[format]) { // remove format
       if (modeCfg.highlightFormatting) state.formatting = format;
-      type = getType(state);
+      var type = getType(state);
       state[format] = false;
       return type;
     } else if (stream.match(closeRE, false)) { // add format
@@ -318,10 +341,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function listFunc(stream, state) {
-    var match    = stream.match(re.list)
-    ,   listType
-    ,   listMod
-    ;
+    var match = stream.match(re.list),
+        listType,
+        listMod;
     state.listDepth = match[0].length;
     listMod = (state.listDepth - 1) % 3;
     if (!listMod) {
@@ -386,9 +408,8 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function getType(state, extraTypes) {
-    var styles = []
-    ,   type
-    ;
+    var styles = [],
+        type;
     if (state.formatting) {
       styles.push(format.formatting);
 
@@ -424,12 +445,11 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function activeStyles(state) {
-    var styles = []
-    ,   i
-    ,   length = arguments.length
-    ,   arg
-    ;
-    for (i=1; i < length; ++i) {
+    var styles = [],
+        length = arguments.length,
+        arg,
+        i;
+    for (i = 1; i < length; ++i) {
       arg = arguments[i];
       if (state[arg]) {
         styles.push(format[arg]);

@@ -62,6 +62,8 @@
   MT('italic',
       'foo [italic __bar__]');
 
+  MT('pre','[pre pre. Text]');
+
   MT('italicBogus',
       'code__mirror');
 
@@ -144,8 +146,8 @@
   MT('divWithAttribute',
       '[div div][div&attributes (#my-id)][div . foo bar]');
 
-  MT('divWithAttributeAnd2emLeftPadding',
-      '[div div][div&attributes (((#my-id)][div . foo bar]');
+  MT('divWithAttributeAnd2emRightPadding',
+      '[div div][div&attributes (#my-id)((][div . foo bar]');
 
   MT('divWithClassAndId',
       '[div div][div&attributes (my-class#my-id)][div . foo bar]');
@@ -240,7 +242,8 @@
 
   MT('tableWithSpans',
       '[table&table-heading |_. name |_. age|]',
-      '[table |][table&attributes \\2][table . Jim |]',
+      '[table |][table&attributes /2][table . Jim |]',
+      '[table |][table&attributes \\2][table . Jim |]');
 
   MT('special-characters',
       'RegisteredTrademark[special-char&special-char-r (r)], ' +
