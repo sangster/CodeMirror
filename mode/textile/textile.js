@@ -31,6 +31,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     footCite: 'footnote-citation',
     formatting: 'formatting',
     header: 'header',
+    html: 'html',
     italic: 'italic',
     link: 'link',
     linkDef: 'link-definition',
@@ -85,6 +86,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     drawTable: /\|.*\|/,
     foot: /fn\d+/,
     header: /h[1-6]/,
+    html: /<(\/)?(\w+)([^>]+)?>([^<]+<\/\1>)?/,
     linkDef: /\[[^\s\]]+\]\S+/,
     list: /(?:#+|\*+)/,
     notextile: 'notextile',
@@ -116,6 +118,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     drawTable: makeRe('^', typeSpec.drawTable, '$'),
     foot: makeRe('^', typeSpec.foot),
     header: makeRe('^', typeSpec.header),
+    html: makeRe('^', typeSpec.html, '(?:', typeSpec.html, ')*', '$'),
     linkDef: makeRe('^', typeSpec.linkDef, '$'),
     list: makeRe('^', typeSpec.list),
     listLayout: makeRe('^', typeSpec.list, attrs.all, '*\\s+'),
@@ -192,6 +195,8 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       return switchBlock(stream, state, tableFunc);
     } else if (stream.match(re.linkDef, false)) {
       return switchBlock(stream, state, linkDefFunc);
+    } else if (stream.match(re.html, false)) {
+      return switchBlock(stream, state, htmlFunc);
     }
 
     return switchInline(stream, state, state.inlineFunc);
@@ -368,6 +373,12 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
   function linkDefFunc(stream, state) {
     var type = getType(state, format['linkDef']);
+    stream.skipToEnd();
+    return type;
+  }
+
+  function htmlFunc(stream, state) {
+    var type = getType(state, format['html']);
     stream.skipToEnd();
     return type;
   }

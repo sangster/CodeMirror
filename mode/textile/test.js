@@ -287,4 +287,18 @@
       'p[attributes (my-class)]. This is a paragraph that has a class and' +
         ' this [em _][em&attributes (#special-phrase)][em emphasized phrase_]' +
         ' has an id.');
+
+  MT('html',
+    '[html <div id="shopping-cart">]',
+    '[html <form action="form_action" method="get">]',
+    '',
+    '[header&header-3 h3. Your cart]',
+    '',
+    '[variable-2 * Item one]',
+    '[variable-2 * Item two]',
+    '',
+    '[html <p><input type="submit" value="Check Out" /></p>]',
+    '',
+    '[html </form>]',
+    '[html </div>]');
 })();
