@@ -301,4 +301,7 @@
     '',
     '[html </form>]',
     '[html </div>]');
+
+  MT('notextile',
+    '[notextile notextile. This has *no* textile formatting, see?]');
 })();

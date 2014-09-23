@@ -38,6 +38,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     list1: 'variable-2',
     list2: 'variable-3',
     list3: 'keyword',
+    notextile: 'notextile',
     pre: 'pre',
     p: 'p',
     quote: 'quote',
@@ -329,6 +330,7 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
     } else if (ch === '@') {
       return togglePhrase(stream, state, 'code', /^.*@/);
     }
+    return getType(state);
   }
 
   function togglePhrase(stream, state, format, closeRE) {
@@ -419,8 +421,26 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
   }
 
   function getType(state, extraTypes) {
+    if (state.type === 'notextile') {
+      return format['notextile'];
+    }
+
     var styles = [],
         type;
+
+    // Block Type
+    if (state.type) { styles.push(format[state.type]); }
+
+    styles = styles.concat(activeStyles(state, 'addition', 'bold', 'cite',
+        'code', 'deletion', 'em', 'footCite', 'italic', 'link', 'span',
+        'strong', 'sub', 'sup', 'table', 'tableHeading'));
+
+    if (state.type === 'header') { styles.push(format.header + "-" + state.header); }
+    if (state.specialChar) {
+      styles.push(format.specialChar);
+      styles.push(format.specialChar + "-" + state.specialChar);
+    }
+
     if (state.formatting) {
       styles.push(format.formatting);
 
@@ -435,22 +455,13 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       }
     }
 
-    // Block Type
-    if ( state.type ) { styles.push(format[state.type]); }
+    return stylesToString(styles, extraTypes);
+  }
 
-    styles = styles.concat(activeStyles(state, 'addition', 'bold', 'cite',
-        'code', 'deletion', 'em', 'footCite', 'italic', 'link', 'span',
-        'strong', 'sub', 'sup', 'table', 'tableHeading'));
-
-    if (state.type === 'header') { styles.push(format.header + "-" + state.header); }
-    if (state.specialChar) {
-      styles.push(format.specialChar);
-      styles.push(format.specialChar + "-" + state.specialChar);
-    }
-
-    type = styles.length ? styles.join(' ') : null;
-    if(extraTypes) {
-      return type ? (type + ' ' + extraTypes) : extraTypes;
+  function stylesToString(styles, extraStyles) {
+    var type = styles.length ? styles.join(' ') : null;
+    if(extraStyles) {
+      return type ? (type + ' ' + extraStyles) : extraStyles;
     }
     return type;
   }
