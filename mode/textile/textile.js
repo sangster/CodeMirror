@@ -80,16 +80,6 @@ CodeMirror.defineMode("textile", function() {
     return newMode.call(this, this.stream, this.state);
   };
 
-//  Parser.prototype.switchInline = function(newMode) {
-//    this.state.currentMode = this.state.inlineMode = newMode;
-//    return newMode.call(this, this.stream, this.state);
-//  };
-//
-//  Parser.prototype.switchBlock = function(newMode) {
-//    this.state.currentMode = this.state.blockMode = newMode;
-//    return newMode.call(this, this.stream, this.state);
-//  };
-
   Parser.prototype.handleSpecialChar = function(ch) {
     if (ch === '_') {
       if (this.stream.eat('_')) {
@@ -520,31 +510,7 @@ CodeMirror.defineMode("textile", function() {
     return {
       currentMode: Modes.blockNormal,
       blockMode: Modes.blockNormal,
-      inlineMode: Modes.inlineNormal,
-
-      type: null,
-      header: false,
-      list: false,
-
-      addition: false,
-      bold: false,
-      cite: false,
-      code: false,
-      deletion: false,
-      em: false,
-      footCite: false,
-      italic: false,
-      link: false,
-      span: false,
-      strong: false,
-      sub: false,
-      sup: false,
-
-      table: false,
-      tableHeading: false,
-      specialChar: null,
-
-      multiBlock: false
+      inlineMode: Modes.inlineNormal
     };
   }
 
