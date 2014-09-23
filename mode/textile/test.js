@@ -4,13 +4,6 @@
 (function() {
   var mode = CodeMirror.getMode({tabSize: 4}, 'textile');
   function MT(name) { test.mode(name, mode, Array.prototype.slice.call(arguments, 1)); }
-  var modeHighlightFormatting = CodeMirror.getMode({tabSize: 4}, {name: 'textile', highlightFormatting: true});
-  function FT(name) { test.mode(name, modeHighlightFormatting, Array.prototype.slice.call(arguments, 1)); }
-
-
-//  FT('simple_header',
-//      '[formatting&formatting-header&formatting-header-1&header&header-1 h1. ]' +
-//      '[header&header-1 Give RedCloth a try!]');
 
   MT('plainText',
       'This is some text.');
@@ -283,24 +276,24 @@
   MT('additionBogus',
       '3 + 3 = 6');
 
-  MT('moo',
+  MT('phraseModifierAttributes',
       'p[attributes (my-class)]. This is a paragraph that has a class and' +
         ' this [em _][em&attributes (#special-phrase)][em emphasized phrase_]' +
         ' has an id.');
 
   MT('html',
-    '[html <div id="shopping-cart">]',
-    '[html <form action="form_action" method="get">]',
-    '',
-    '[header&header-3 h3. Your cart]',
-    '',
-    '[variable-2 * Item one]',
-    '[variable-2 * Item two]',
-    '',
-    '[html <p><input type="submit" value="Check Out" /></p>]',
-    '',
-    '[html </form>]',
-    '[html </div>]');
+      '[html <div id="shopping-cart">]',
+      '[html <form action="form_action" method="get">]',
+      '',
+      '[header&header-3 h3. Your cart]',
+      '',
+      '[variable-2 * Item one]',
+      '[variable-2 * Item two]',
+      '',
+      '[html <p><input type="submit" value="Check Out" /></p>]',
+      '',
+      '[html </form>]',
+      '[html </div>]');
 
   MT('notextile',
     '[notextile notextile. This has *no* textile formatting, see?]');

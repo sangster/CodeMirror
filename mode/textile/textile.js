@@ -11,47 +11,289 @@
 })(function(CodeMirror) {
 "use strict";
 
-CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
+CodeMirror.defineMode("textile", function() {
   var mode = {
     token: token,
     startState: startState,
     blankLine: blankLine
   };
 
-  var format = {
-    addition: 'addition',
-    attributes: 'attributes',
-    bold: 'bold',
-    cite: 'cite',
-    code: 'code',
-    deletion: 'deletion',
-    div: 'div',
-    em: 'em',
-    footnote: 'footnote',
-    footCite: 'footnote-citation',
-    formatting: 'formatting',
-    header: 'header',
-    html: 'html',
-    italic: 'italic',
-    link: 'link',
-    linkDef: 'link-definition',
-    list1: 'variable-2',
-    list2: 'variable-3',
-    list3: 'keyword',
-    notextile: 'notextile',
-    pre: 'pre',
-    p: 'p',
-    quote: 'quote',
-    span: 'span',
-    specialChar: 'special-char',
-    strong: 'strong',
-    sub: 'sub',
-    sup: 'sup',
-    table: 'table',
-    tableHeading: 'table-heading'
+
+
+
+  function Parser(stream, state) {
+    this.stream = stream;
+    this.state = state;
+    this._format = {
+      addition: 'addition',
+      attributes: 'attributes',
+      bold: 'bold',
+      cite: 'cite',
+      code: 'code',
+      deletion: 'deletion',
+      div: 'div',
+      em: 'em',
+      footnote: 'footnote',
+      footCite: 'footnote-citation',
+      header: 'header',
+      html: 'html',
+      italic: 'italic',
+      link: 'link',
+      linkDef: 'link-definition',
+      list1: 'variable-2',
+      list2: 'variable-3',
+      list3: 'keyword',
+      notextile: 'notextile',
+      pre: 'pre',
+      p: 'p',
+      quote: 'quote',
+      span: 'span',
+      specialChar: 'special-char',
+      strong: 'strong',
+      sub: 'sub',
+      sup: 'sup',
+      table: 'table',
+      tableHeading: 'table-heading'
+    };
+
+    this.state.specialChar = null;
+  }
+
+  Parser.prototype.startNewLine = function() {
+    this.state.currentMode = this.state.blockMode;
+    this.state.tableHeading = false;
   };
 
-  function makeRe() {
+  Parser.prototype.nextType = function () {
+    return this.state.currentMode.call(this);
+  };
+
+  Parser.prototype.format = function(name) {
+    if (this._format.hasOwnProperty(name)) {
+      return this._format[name];
+    }
+    throw 'unknown format';
+  };
+
+  Parser.prototype.execMode = function(newMode) {
+    this.state.currentMode = newMode;
+    return newMode.call(this, this.stream, this.state);
+  };
+
+//  Parser.prototype.switchInline = function(newMode) {
+//    this.state.currentMode = this.state.inlineMode = newMode;
+//    return newMode.call(this, this.stream, this.state);
+//  };
+//
+//  Parser.prototype.switchBlock = function(newMode) {
+//    this.state.currentMode = this.state.blockMode = newMode;
+//    return newMode.call(this, this.stream, this.state);
+//  };
+
+  Parser.prototype.handleSpecialChar = function(ch) {
+    if (ch === '_') {
+      if (this.stream.eat('_')) {
+        return this.togglePhrase('italic', /^.*__/);
+      }
+      return this.togglePhrase('em', /^.*_/);
+    } else if (ch === '*') {
+      if (this.stream.eat('*')) {
+        return this.togglePhrase('bold', /^.*\*\*/);
+      }
+      return this.togglePhrase('strong', /^.*\*/);
+    } else if (ch === '[') {
+      if (this.stream.match(/\d+\]/)) {
+        this.state.footCite = true;
+      }
+      return this.getType(this.state);
+    } else if (ch === '(') {
+      if (this.stream.match('r)')) {
+        this.state.specialChar = 'r';
+      } else if (this.stream.match('tm)')) {
+        this.state.specialChar = 'tm';
+      } else if (this.stream.match('c)')) {
+        this.state.specialChar = 'c';
+      }
+      return this.getType(this.state);
+    } else if (ch === '?' && this.stream.eat('?')) {
+      return this.togglePhrase('cite', /^.*\?/);
+    } else if (ch === '-') {
+      return this.togglePhrase('deletion', /^.*-/);
+    } else if (ch === '+') {
+      return this.togglePhrase('addition', /^.*\+/);
+    } else if (ch === '~') {
+      return this.togglePhrase('sub', /^.*~/);
+    } else if (ch === '^') {
+      return this.togglePhrase('sup', /^.*\^/);
+    } else if (ch === '%') {
+      return this.togglePhrase('span', /^.*%/);
+    } else if (ch === '@') {
+      return this.togglePhrase('code', /^.*@/);
+    }
+    return this.getType(this.state);
+  };
+
+  Parser.prototype.togglePhrase = function(format, closeRE) {
+    if (this.state[format]) { // remove format
+      var type = this.getType(this.state);
+      this.state[format] = false;
+      return type;
+    } else if (this.stream.match(closeRE, false)) { // add format
+      this.state[format] = true;
+      this.state.currentMode = Modes.attrs;
+      return this.getType(this.state);
+    }
+  };
+
+  Parser.prototype.getType = function(state, extraTypes) {
+    if (state.type === 'notextile') {
+      return this.format('notextile');
+    }
+
+    var styles = [];
+
+    // Block Type
+    if (state.type) { styles.push(this.format(state.type)); }
+
+    styles = styles.concat(this.activeStyles(state, 'addition', 'bold', 'cite',
+        'code', 'deletion', 'em', 'footCite', 'italic', 'link', 'span',
+        'strong', 'sub', 'sup', 'table', 'tableHeading'));
+
+    if (state.type === 'header') { styles.push(this.format('header') + "-" + state.header); }
+    if (state.specialChar) {
+      styles.push(this.format('specialChar'));
+      styles.push(this.format('specialChar') + "-" + state.specialChar);
+    }
+
+    return this.stylesToString(styles, extraTypes);
+  };
+
+  Parser.prototype.stylesToString = function(styles, extraStyles) {
+    var type = styles.length ? styles.join(' ') : null;
+    if(extraStyles) {
+      return type ? (type + ' ' + extraStyles) : extraStyles;
+    }
+    return type;
+  };
+
+  Parser.prototype.activeStyles = function (state) {
+    var styles = [],
+        length = arguments.length,
+        arg,
+        i;
+    for (i = 1; i < length; ++i) {
+      arg = arguments[i];
+      if (state[arg]) {
+        styles.push(this.format(arg));
+      }
+    }
+    return styles;
+  };
+
+
+
+
+
+
+
+
+
+  function Reg() {
+    this._cache = {};
+    this._single = {
+      bc: 'bc',
+      bq: 'bq',
+      div: 'div',
+      drawTable: /\|.*\|/,
+      foot: /fn\d+/,
+      header: /h[1-6]/,
+      html: /<(\/)?(\w+)([^>]+)?>([^<]+<\/\1>)?/,
+      linkDef: /\[[^\s\]]+\]\S+/,
+      list: /(?:#+|\*+)/,
+      notextile: 'notextile',
+      para: 'p',
+      pre: 'pre',
+      table: 'table',
+      tableAttrs: /[/\\]\d+/,
+      tableHeading: /\|_\./,
+      tableText: /[^"_\*\[\(\?\+~\^%@|-]+/,
+      text: /[^"_\*\[\(\?\+~\^%@-]+/
+    };
+    this._attrs = {
+      align: /(?:<>|<|>|=)/,
+      selector: /\([^\(][^\)]+\)/,
+      lang: /\[[^\[\]]+\]/,
+      pad: /(?:\(+|\)+){1,2}/,
+      css: /\{[^\}]+\}/
+    };
+  }
+
+  Reg.prototype.pattern = function(name) {
+    return (this._cache[name] || this._createRe(name));
+  };
+
+  Reg.prototype._createRe = function (name) {
+    switch (name) {
+      case 'bc':
+        return this._makeRe('^', this._single.bc);
+      case 'bq':
+        return this._makeRe('^', this._single.bq);
+      case 'div':
+        return this._makeRe('^', this._single.div);
+      case 'drawTable':
+        return this._makeRe('^', this._single.drawTable, '$');
+      case 'foot':
+        return this._makeRe('^', this._single.foot);
+      case 'header':
+        return this._makeRe('^', this._single.header);
+      case 'html':
+        return this._makeRe('^', this._single.html, '(?:', this._single.html, ')*', '$');
+      case 'linkDef':
+        return this._makeRe('^', this._single.linkDef, '$');
+      case 'list':
+        return this._makeRe('^', this._single.list);
+      case 'listLayout':
+        return this._makeRe('^', this._single.list, this.pattern('allAttrs'), '*\\s+');
+      case 'notextile':
+        return this._makeRe('^', this._single.notextile);
+      case 'para':
+        return this._makeRe('^', this._single.para);
+      case 'pre':
+        return this._makeRe('^', this._single.pre);
+      case 'tableText':
+        return this._makeRe('^', this._single.tableText);
+      case 'text':
+        return this._makeRe('^', this._single.text);
+      case 'table':
+        return this._makeRe('^', this._single.table);
+      case 'tableAttrs':
+        return this._makeRe('^', this._single.tableAttrs);
+      case 'tableHeading':
+        return this._makeRe('^', this._single.tableHeading);
+      case 'type':
+        return this._makeRe('^', this.pattern('allTypes'));
+      case 'typeLayout':
+        return this._makeRe('^', this.pattern('allTypes'), this.pattern('allAttrs'), '*\\.\\.?(\\s+|$)');
+      case 'attrs':
+        return this._makeRe('^', this.pattern('allAttrs'), '+');
+
+      case 'allTypes':
+        return this._choiceRe(this._single.div, this._single.foot,
+            this._single.header, this._single.bc, this._single.bq,
+            this._single.notextile, this._single.pre, this._single.table,
+            this._single.para);
+
+      case 'allAttrs':
+        return this._choiceRe(this._attrs.selector, this._attrs.css,
+            this._attrs.lang, this._attrs.align, this._attrs.pad);
+
+      default:
+        throw 'unknown regex';
+    }
+  };
+
+
+  Reg.prototype._makeRe = function () {
     var pattern = '',
         length = arguments.length,
         i,
@@ -62,9 +304,9 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       pattern += (typeof arg === 'string') ? arg : arg.source;
     }
     return new RegExp(pattern);
-  }
+  };
 
-  function choiceRe() {
+  Reg.prototype._choiceRe = function () {
     var parts = [arguments[0]],
         length = arguments.length,
         i;
@@ -76,88 +318,209 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
 
     parts.unshift('(?:');
     parts.push(')');
-    return makeRe.apply(this, parts);
-  }
-
-  // some of there expressions are from http://github.com/borgar/textile-js
-  var typeSpec = {
-    bc: 'bc',
-    bq: 'bq',
-    div: 'div',
-    drawTable: /\|.*\|/,
-    foot: /fn\d+/,
-    header: /h[1-6]/,
-    html: /<(\/)?(\w+)([^>]+)?>([^<]+<\/\1>)?/,
-    linkDef: /\[[^\s\]]+\]\S+/,
-    list: /(?:#+|\*+)/,
-    notextile: 'notextile',
-    para: 'p',
-    pre: 'pre',
-    table: 'table',
-    tableAttrs: /[/\\]\d+/,
-    tableHeading: /\|_\./,
-    tableText: /[^"_\*\[\(\?\+~\^%@|-]+/,
-    text: /[^"_\*\[\(\?\+~\^%@-]+/
-  };
-  typeSpec.all = choiceRe(typeSpec.div, typeSpec.foot, typeSpec.header,
-      typeSpec.bc, typeSpec.bq, typeSpec.notextile, typeSpec.pre,
-      typeSpec.table, typeSpec.para);
-
-  var attrs = {
-    align: /(?:<>|<|>|=)/,
-    selector: /\([^\(][^\)]+\)/,
-    lang: /\[[^\[\]]+\]/,
-    pad: /(?:\(+|\)+){1,2}/,
-    css: /\{[^\}]+\}/
-  };
-  attrs.all = choiceRe(attrs.selector, attrs.css, attrs.lang, attrs.align, attrs.pad);
-
-  var re = {
-    bc: makeRe('^', typeSpec.bc),
-    bq: makeRe('^', typeSpec.bq),
-    div: makeRe('^', typeSpec.div),
-    drawTable: makeRe('^', typeSpec.drawTable, '$'),
-    foot: makeRe('^', typeSpec.foot),
-    header: makeRe('^', typeSpec.header),
-    html: makeRe('^', typeSpec.html, '(?:', typeSpec.html, ')*', '$'),
-    linkDef: makeRe('^', typeSpec.linkDef, '$'),
-    list: makeRe('^', typeSpec.list),
-    listLayout: makeRe('^', typeSpec.list, attrs.all, '*\\s+'),
-    notextile: makeRe('^', typeSpec.notextile),
-    para: makeRe('^', typeSpec.para),
-    pre: makeRe('^', typeSpec.pre),
-    tableText: makeRe('^', typeSpec.tableText),
-    text: makeRe('^', typeSpec.text),
-    table: makeRe('^', typeSpec.table),
-    tableAttrs: makeRe('^', typeSpec.tableAttrs),
-    tableHeading: makeRe('^', typeSpec.tableHeading),
-    type: makeRe('^', typeSpec.all),
-    typeLayout: makeRe('^', typeSpec.all, attrs.all, '*\\.\\.?(\\s+|$)'),
-
-    attrs: makeRe('^', attrs.all, '+')
+    return this._makeRe.apply(this, parts);
   };
 
-  if (modeCfg.highlightFormatting === undefined) {
-    modeCfg.highlightFormatting = false;
-  }
+
+
+
+
+
+
+  var Modes = {
+    list: function() {
+      var match = this.stream.match(re.pattern('list')),
+          listMod;
+      this.state.listDepth = match[0].length;
+      listMod = (this.state.listDepth - 1) % 3;
+      if (!listMod) {
+        this.state.type = 'list1';
+      } else if (listMod === 1) {
+        this.state.type = 'list2';
+      } else {
+        this.state.type = 'list3';
+      }
+      this.state.currentMode = Modes.attrs;
+      return this.getType(this.state);
+    },
+
+    table: function() {
+      this.state.type = 'table';
+      return this.execMode(this.state.inlineMode = Modes.tableCell);
+    },
+
+    linkDef: function() {
+      var type = this.getType(this.state, this.format('linkDef'));
+      this.stream.skipToEnd();
+      return type;
+    },
+
+    html: function() {
+      var type = this.getType(this.state, this.format('html'));
+      this.stream.skipToEnd();
+      return type;
+    },
+
+    tableCell: function() {
+      if (this.stream.match(re.pattern('tableHeading'))) {
+        this.state.tableHeading = true;
+      } else {
+        this.stream.eat('|');
+      }
+      this.state.currentMode = this.state.inlineMode = Modes.tableCellAttrs;
+      return this.getType(this.state);
+    },
+
+    tableCellAttrs: function() {
+      var attrsPresent;
+      this.state.currentMode = this.state.inlineMode = Modes.inlineTable;
+
+      if (this.stream.match(re.pattern('tableAttrs'))) {
+        attrsPresent = true;
+      }
+      if (this.stream.match(re.pattern('attrs'))) {
+        attrsPresent = true;
+      }
+      if (attrsPresent) {
+        return this.getType(this.state, this.format('attributes'));
+      }
+
+      return this.getType(this.state);
+    },
+
+    link: function() {
+      if (this.stream.match(/[^(?:":)]+":\S/)) {
+        this.stream.match(/\S+/);
+      }
+      this.state.currentMode = this.state.inlineMode = Modes.inlineNormal;
+      return this.getType(this.state, this.format('link'));
+    },
+
+    blockType: function() {
+      var match,
+          type;
+      this.state.type = null;
+
+      if (match = this.stream.match(re.pattern('type'))) {
+        type = match[0];
+      } else {
+        return this.execMode(this.state.inlineMode = this.state.inlineMode);
+      }
+
+      if(match = type.match(re.pattern('header'))) {
+        this.state.type = 'header';
+        this.state.header = parseInt(match[0][1]);
+      } else if (type.match(re.pattern('bq'))) {
+        this.state.type = 'quote';
+      } else if (type.match(re.pattern('bc'))) {
+        this.state.type = 'code';
+      } else if (type.match(re.pattern('foot'))) {
+        this.state.type = 'footnote';
+      } else if (type.match(re.pattern('notextile'))) {
+        this.state.type = 'notextile';
+      } else if (type.match(re.pattern('pre'))) {
+        this.state.type = 'pre';
+      } else if (type.match(re.pattern('div'))) {
+        this.state.type = 'div';
+      } else if (type.match(re.pattern('table'))) {
+        this.state.type = 'table';
+      }
+
+      this.state.currentMode = Modes.attrs;
+      return this.getType(this.state);
+    },
+
+    attrs: function() {
+      this.state.currentMode = this.state.inlineMode = Modes.typeLen;
+
+      if (this.stream.match(re.pattern('attrs'))) {
+        return this.getType(this.state, this.format('attributes'));
+      }
+      return this.getType(this.state);
+    },
+
+    typeLen: function() {
+      if (this.stream.eat('.') && this.stream.eat('.')) {
+        this.state.multiBlock = true;
+      }
+
+      this.state.currentMode = this.state.inlineMode = Modes.inlineNormal;
+      return this.getType(this.state);
+    },
+
+    inlineNormal: function() {
+      if (this.stream.match(re.pattern('text'), true)) {
+        return this.getType(this.state);
+      }
+
+      var ch = this.stream.next();
+
+      if (ch === '"') {
+        return this.execMode(this.state.inlineMode = Modes.link);
+      }
+      return this.handleSpecialChar(ch);
+    },
+
+    inlineTable: function() {
+      if (this.stream.match(re.pattern('tableText'), true)) {
+        return this.getType(this.state);
+      }
+
+      if (this.stream.peek() === '|') {
+        this.state.currentMode = this.state.inlineMode = Modes.tableCell;
+        return this.getType(this.state);
+      }
+      return this.handleSpecialChar(this.stream.next());
+    },
+
+    blockNormal: function() {
+      if (this.stream.match(re.pattern('typeLayout'), false)) {
+        this.state.multiBlock = false;
+        return this.execMode(this.state.inlineMode = Modes.blockType);
+      } else if (this.stream.match(re.pattern('listLayout'), false)) {
+        return this.execMode(this.state.blockMode = Modes.list);
+      } else if (this.stream.match(re.pattern('drawTable'), false)) {
+        return this.execMode(this.state.blockMode = Modes.table);
+      } else if (this.stream.match(re.pattern('linkDef'), false)) {
+        return this.execMode(this.state.blockMode = Modes.linkDef);
+      } else if (this.stream.match(re.pattern('html'), false)) {
+        return this.execMode(this.state.inlineMode = Modes.html);
+      }
+
+      return this.execMode(this.state.inlineMode);
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+  var re = new Reg();
+
+
+
+
+
 
   function token(stream, state) {
-    state.formatting = false;
-    state.specialChar = null;
+    var parser = new Parser(stream, state);
 
     if (stream.sol()) {
-      state.func = state.blockFunc;
-      state.tableHeading = false;
+      parser.startNewLine();
     }
-
-    return state.func(stream, state);
+    return parser.nextType();
   }
 
   function startState() {
     return {
-      func: blockNormal,
-      blockFunc: blockNormal,
-      inlineFunc: inlineNormal,
+      currentMode: Modes.blockNormal,
+      blockMode: Modes.blockNormal,
+      inlineMode: Modes.inlineNormal,
 
       type: null,
       header: false,
@@ -181,333 +544,38 @@ CodeMirror.defineMode("textile", function(cmCfg, modeCfg) {
       tableHeading: false,
       specialChar: null,
 
-      multiBlock: false,
-      formatting: false
+      multiBlock: false
     };
-  }
-
-  function blockNormal(stream, state) {
-    if (stream.match(re.typeLayout, false)) {
-      state.multiBlock = false;
-      return switchInline(stream, state, blockType);
-    } else if (stream.match(re.listLayout, false)) {
-      return switchBlock(stream, state, listFunc);
-    } else if (stream.match(re.drawTable, false)) {
-      return switchBlock(stream, state, tableFunc);
-    } else if (stream.match(re.linkDef, false)) {
-      return switchBlock(stream, state, linkDefFunc);
-    } else if (stream.match(re.html, false)) {
-      return switchBlock(stream, state, htmlFunc);
-    }
-
-    return switchInline(stream, state, state.inlineFunc);
-  }
-
-  function switchInline(stream, state, f) {
-    state.func = state.inlineFunc = f;
-    return f(stream, state);
-  }
-
-  function switchBlock(stream, state, f) {
-    state.func = state.blockFunc = f;
-    return f(stream, state);
-  }
-
-  function blockType(stream, state) {
-    var match,
-        type;
-    state.type = null;
-
-    if (match = stream.match(re.type)) {
-      type = match[0];
-    } else {
-      return switchInline(stream, state, state.inlineFunc);
-    }
-
-    if(match = type.match(re.header)) {
-      state.type = 'header';
-      state.header = parseInt(match[0][1]);
-    } else if (type.match(re.bq)) {
-      state.type = 'quote';
-    } else if (type.match(re.bc)) {
-      state.type = 'code';
-    } else if (type.match(re.foot)) {
-      state.type = 'footnote';
-    } else if (type.match(re.notextile)) {
-      state.type = 'notextile';
-    } else if (type.match(re.pre)) {
-      state.type = 'pre';
-    } else if (type.match(re.div)) {
-      state.type = 'div';
-    } else if (type.match(re.table)) {
-      state.type = 'table';
-    }
-
-    state.func = attrsFunc;
-    return getType(state);
-  }
-
-  function attrsFunc(stream, state) {
-    state.func = state.inlineFunc = typeLenFunc;
-
-    if (stream.match(re.attrs)) {
-      return getType(state, format['attributes']);
-    }
-    return getType(state);
-  }
-
-  function typeLenFunc(stream, state) {
-    if (stream.eat('.') && stream.eat('.')) {
-      state.multiBlock = true;
-    }
-
-    state.func = state.inlineFunc = inlineNormal;
-    return getType(state);
-  }
-
-  function inlineNormal(stream, state) {
-    if (stream.match(re.text, true)) {
-      return getType(state);
-    }
-
-    var ch = stream.next();
-
-    if (ch === '"') {
-      return switchInline(stream, state, linkFunc);
-    }
-    return handleSpecialChar(stream, state, ch);
-  }
-
-  function inlineTable(stream, state) {
-    if (stream.match(re.tableText, true)) {
-      return getType(state);
-    }
-
-    if (stream.peek() === '|') {
-      state.func = state.inlineFunc = tableCellFunc;
-      return getType(state);
-    }
-    return handleSpecialChar(stream, state, stream.next());
-  }
-
-  function handleSpecialChar(stream, state, ch) {
-    if (ch === '_') {
-      if (stream.eat('_')) {
-        return togglePhrase(stream, state, 'italic', /^.*__/);
-      }
-      return togglePhrase(stream, state, 'em', /^.*_/);
-    } else if (ch === '*') {
-      if (stream.eat('*')) {
-        return togglePhrase(stream, state, 'bold', /^.*\*\*/);
-      }
-      return togglePhrase(stream, state, 'strong', /^.*\*/);
-    } else if (ch === '[') {
-      if (stream.match(/\d+\]/)) {
-        state.footCite = true;
-      }
-      return getType(state);
-    } else if (ch === '(') {
-      if (stream.match('r)')) {
-        state.specialChar = 'r';
-      } else if (stream.match('tm)')) {
-        state.specialChar = 'tm';
-      } else if (stream.match('c)')) {
-        state.specialChar = 'c';
-      }
-      return getType(state);
-    } else if (ch === '?' && stream.eat('?')) {
-      return togglePhrase(stream, state, 'cite', /^.*\?/);
-    } else if (ch === '-') {
-      return togglePhrase(stream, state, 'deletion', /^.*-/);
-    } else if (ch === '+') {
-      return togglePhrase(stream, state, 'addition', /^.*\+/);
-    } else if (ch === '~') {
-      return togglePhrase(stream, state, 'sub', /^.*~/);
-    } else if (ch === '^') {
-      return togglePhrase(stream, state, 'sup', /^.*\^/);
-    } else if (ch === '%') {
-      return togglePhrase(stream, state, 'span', /^.*%/);
-    } else if (ch === '@') {
-      return togglePhrase(stream, state, 'code', /^.*@/);
-    }
-    return getType(state);
-  }
-
-  function togglePhrase(stream, state, format, closeRE) {
-    if (state[format]) { // remove format
-      if (modeCfg.highlightFormatting) state.formatting = format;
-      var type = getType(state);
-      state[format] = false;
-      return type;
-    } else if (stream.match(closeRE, false)) { // add format
-      state[format] = true;
-      if (modeCfg.highlightFormatting) state.formatting = format;
-      state.func = attrsFunc;
-      return getType(state);
-    }
-  }
-
-  function listFunc(stream, state) {
-    var match = stream.match(re.list),
-        listType,
-        listMod;
-    state.listDepth = match[0].length;
-    listMod = (state.listDepth - 1) % 3;
-    if (!listMod) {
-      state.type = 'list1';
-    } else if (listMod === 1) {
-      state.type = 'list2';
-    } else {
-      state.type = 'list3';
-    }
-    if (modeCfg.highlightFormatting) {
-      listType = (match[0][0] === '#' ? 'ol' : 'ul');
-      state.formatting = ["list", "list-" + listType];
-    }
-    state.func = attrsFunc;
-    return getType(state);
-  }
-
-  function tableFunc(stream, state) {
-    state.type = 'table';
-    return switchInline(stream, state, tableCellFunc);
-  }
-
-  function linkDefFunc(stream, state) {
-    var type = getType(state, format['linkDef']);
-    stream.skipToEnd();
-    return type;
-  }
-
-  function htmlFunc(stream, state) {
-    var type = getType(state, format['html']);
-    stream.skipToEnd();
-    return type;
-  }
-
-  function tableCellFunc(stream, state) {
-    if (stream.match(re.tableHeading)) {
-      state.tableHeading = true;
-    } else {
-      stream.eat('|');
-    }
-    state.func = state.inlineFunc = tableCellAttrsFunc;
-    return getType(state);
-  }
-
-  function tableCellAttrsFunc(stream, state) {
-    var attrsPresent;
-    state.func = state.inlineFunc = inlineTable;
-
-    if (stream.match(re.tableAttrs)) {
-      attrsPresent = true;
-    }
-    if (stream.match(re.attrs)) {
-      attrsPresent = true;
-    }
-    if (attrsPresent) {
-      return getType(state, format['attributes']);
-    }
-
-    return getType(state);
-  }
-
-  function linkFunc(stream, state) {
-    if (stream.match(/[^(?:":)]+":\S/)) {
-      stream.match(/\S+/);
-    }
-    state.func = state.inlineFunc = inlineNormal;
-    return getType(state, format['link']);
-  }
-
-  function getType(state, extraTypes) {
-    if (state.type === 'notextile') {
-      return format['notextile'];
-    }
-
-    var styles = [],
-        type;
-
-    // Block Type
-    if (state.type) { styles.push(format[state.type]); }
-
-    styles = styles.concat(activeStyles(state, 'addition', 'bold', 'cite',
-        'code', 'deletion', 'em', 'footCite', 'italic', 'link', 'span',
-        'strong', 'sub', 'sup', 'table', 'tableHeading'));
-
-    if (state.type === 'header') { styles.push(format.header + "-" + state.header); }
-    if (state.specialChar) {
-      styles.push(format.specialChar);
-      styles.push(format.specialChar + "-" + state.specialChar);
-    }
-
-    if (state.formatting) {
-      styles.push(format.formatting);
-
-      if (typeof state.formatting === "string") state.formatting = [state.formatting];
-
-      for (var i = 0; i < state.formatting.length; i++) {
-        styles.push(format.formatting + "-" + state.formatting[i]);
-
-        if (state.formatting[i] === "header") {
-          styles.push(format.formatting + "-" + state.formatting[i] + "-" + state.header);
-        }
-      }
-    }
-
-    return stylesToString(styles, extraTypes);
-  }
-
-  function stylesToString(styles, extraStyles) {
-    var type = styles.length ? styles.join(' ') : null;
-    if(extraStyles) {
-      return type ? (type + ' ' + extraStyles) : extraStyles;
-    }
-    return type;
-  }
-
-  function activeStyles(state) {
-    var styles = [],
-        length = arguments.length,
-        arg,
-        i;
-    for (i = 1; i < length; ++i) {
-      arg = arguments[i];
-      if (state[arg]) {
-        styles.push(format[arg]);
-      }
-    }
-    return styles;
   }
 
   function blankLine(state) {
     resetPhraseModifiers(state);
 
-    state.func = state.blockFunc = blockNormal;
+    state.currentMode = state.blockMode = Modes.blockNormal;
 
     if (!state.multiBlock) {
       state.type = null;
     }
     state.footCite = false;
-    state.header   = false;
-    state.list     = false;
-    state.table    = false;
+    state.header = false;
+    state.list = false;
+    state.table = false;
 
     state.specialChar = null;
   }
 
   function resetPhraseModifiers(state) {
     state.addition = false;
-    state.bold     = false;
-    state.cite     = false;
-    state.code     = false;
+    state.bold = false;
+    state.cite = false;
+    state.code = false;
     state.deletion = false;
-    state.em       = false;
-    state.italic   = false;
-    state.span     = false;
-    state.sub      = false;
-    state.sup      = false;
-    state.strong   = false;
+    state.em = false;
+    state.italic = false;
+    state.span = false;
+    state.sub = false;
+    state.sup = false;
+    state.strong = false;
   }
 
   return mode;
