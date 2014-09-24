@@ -44,21 +44,21 @@
   MT('referenceLink',
       '[link "CodeMirror":code_mirror]',
       'Normal Text.',
-      '[link-definition [[code_mirror]]http://redcloth.org]');
+      '[link-definition [[code_mirror]]http://codemirror.net]');
 
   MT('footCite',
-      '42.7% of all statistics are made up on the spot.[footnote-citation [[1]]]');
+      'foo bar[footnote-citation [[1]]]');
 
   MT('footCiteBogus',
-      '42.7% of all statistics are made up on the spot.[[1a2]]');
+      'foo bar[[1a2]]');
 
   MT('special-characters',
-          'RegisteredTrademark[special-char (r)], ' +
-          'Trademark[special-char (tm)], and ' +
+          'Registered [special-char (r)], ' +
+          'Trademark [special-char (tm)], and ' +
           'Copyright [special-char (c)] 2008');
 
   MT('cite',
-      "My wife's favorite book is [cite ??The Count of Monte Cristo??] by Dumas.");
+      "A book is [cite ??The Count of Monte Cristo??] by Dumas.");
 
   MT('additionAndDeletion',
       'The news networks declared [deletion -Al Gore-] [addition +George W. Bush+] the winner in Florida.');
@@ -73,7 +73,7 @@
       'Percentage 25% is not a span.');
 
   MT('citeBogus',
-      'Question? is not a cite.');
+      'Question? is not a citation.');
 
   MT('codeBogus',
       'user@example.com');
@@ -217,12 +217,12 @@
       'Normal text.');
 
   MT('boo',
-      '[definition-list - coffee := Hot and black]',
-      '[definition-list - tea := Also hot, but a little less black]',
-      '[definition-list - milk :=]',
-      '[definition-list Nourishing beverage for baby cows.]',
+      '[definition-list - dog := woof woof]',
+      '[definition-list - cat := meow meow]',
+      '[definition-list - whale :=]',
+      '[definition-list Whale noises.]',
       '',
-      '[definition-list Cold drink that goes great with cookies. =:]');
+      '[definition-list Also, ][definition-list&em _splashing_][definition-list . =:]');
 
   /*
    * Attributes
@@ -238,7 +238,7 @@
       '[div div][div&attributes (my-class#my-id)][div . foo bar]');
 
   MT('paragraphWithCss',
-      'p[attributes {color:blue;letter-spacing:.5em}]. Spacey blue');
+      'p[attributes {color:red;}]. foo bar');
 
   MT('paragraphNestedStyles',
       'p. [strong *foo ][strong&em _bar_][strong *]');
@@ -281,6 +281,9 @@
       ' this [em _][em&attributes (#special-phrase)][em emphasized phrase_]' +
       ' has an id.');
 
+  MT('linkWithClass',
+      '[link "(my-class). This is a link with class":http://redcloth.org]');
+
   /*
    * Layouts
    */
@@ -321,15 +324,14 @@
       '[header&header-1 h1. Header Text]');
 
   MT('bc..ThenParagraph',
-      '[code bc.. # Output "I love Ruby"]',
-      '[code say = "I love Ruby"]',
-      '[code puts say]',
+      '[code bc.. # Some ruby code]',
+      '[code obj = {foo: :bar}]',
+      '[code puts obj]',
       '',
-      '[code # Output "I *LOVE* RUBY"]',
-      '[code say[[\'love\']] = "*love*"]',
-      '[code puts say.upcase]',
+      '[code obj[[:love]] = "*love*"]',
+      '[code puts obj.love.upcase]',
       '',
-      'p. And that is how you do it.');
+      'p. Normal text.');
 
   MT('fn1..ThenParagraph',
       '[footnote fn1.. foo bar]',
@@ -352,7 +354,7 @@
       '[table |][table&strong *Walter*][table |   5  |]',
       '[table |Florence|   6  |]',
       '',
-      'Normal text.');
+      'p. Normal text.');
 
   MT('tableWithAttributes',
       '[table&table-heading |_. name |_. age|]',
@@ -364,17 +366,17 @@
    */
 
   MT('html',
-      '[html <div id="shopping-cart">]',
-      '[html <form action="form_action" method="get">]',
+      '[html <div id="wrapper">]',
+      '[html <section id="introduction">]',
       '',
-      '[header&header-3 h3. Your cart]',
+      '[header&header-1 h1. Welcome]',
       '',
       '[variable-2 * Item one]',
       '[variable-2 * Item two]',
       '',
-      '[html <p><input type="submit" value="Check Out" /></p>]',
+      '[html <a href="http://example.com">Example</a>]',
       '',
-      '[html </form>]',
+      '[html </section>]',
       '[html </div>]');
 
   MT('inlineHtml',
@@ -385,8 +387,16 @@
    */
 
   MT('notextile',
-    '[notextile notextile. This has *no* textile formatting, see?]');
+    '[notextile notextile. *No* formatting]');
 
   MT('notextileInline',
-      'Use [notextile ==*asterisks*==] to say something [strong *strongly*].');
+      'Use [notextile ==*asterisks*==] for [strong *strong*] text.');
+
+  MT('notextileWithPre',
+      '[pre pre. *No* formatting]');
+
+  MT('notextileWithSpanningPre',
+      '[pre pre.. *No* formatting]',
+      '',
+      '[pre *No* formatting]');
 })();

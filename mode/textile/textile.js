@@ -5,7 +5,7 @@
   if (typeof exports == 'object' && typeof module == 'object') { // CommonJS
     mod(require('../../lib/codemirror'));
   } else if (typeof define == 'function' && define.amd) { // AMD
-    define(["../../lib/codemirror"], mod);
+    define(['../../lib/codemirror'], mod);
   } else { // Plain browser env
     mod(CodeMirror);
   }
@@ -192,7 +192,7 @@ Parser.prototype.tokenStyles = function() {
       'sub', 'sup', 'table', 'tableHeading'));
 
   if (this.state.layoutType === 'header') {
-    styles.push(this.styleFor('header') + "-" + this.state.header);
+    styles.push(this.styleFor('header') + '-' + this.state.header);
   }
   return styles.length ? styles.join(' ') : null;
 };
@@ -203,6 +203,7 @@ Parser.prototype.textileDisabled = function() {
   switch(type) {
     case 'notextile':
     case 'code':
+    case 'pre':
       return type;
     default:
       if (this.state.notextile) {
@@ -266,8 +267,8 @@ function RegExpFactory() {
     drawTable: /\|.*\|/,
     foot: /fn\d+/,
     header: /h[1-6]/,
-    html: /<(\/)?(\w+)([^>]+)?>([^<]+<\/\1>)?/,
-    link: /[^(?:":)]+":\S/,
+    html: /\s*<(?:\/)?(\w+)(?:[^>]+)?>(?:[^<]+<\/\1>)?/,
+    link: /[^"]+":\S/,
     linkDefinition: /\[[^\s\]]+\]\S+/,
     list: /(?:#+|\*+)/,
     notextile: 'notextile',
@@ -529,7 +530,7 @@ var Modes = {
 };
 
 
-CodeMirror.defineMode("textile", function() {
+CodeMirror.defineMode('textile', function() {
   var regExpFactory = new RegExpFactory();
 
   return {
@@ -547,5 +548,5 @@ CodeMirror.defineMode("textile", function() {
   };
 });
 
-CodeMirror.defineMIME("text/x-textile", "textile");
+CodeMirror.defineMIME('text/x-textile', 'textile');
 });
